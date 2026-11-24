@@ -707,4 +707,289 @@ class MediciDataLayerTest {
         }
         v9Db.close()
     }
+
+    @Test
+    fun testGetFuturePendingReminderIdsByParentId() = runTest {
+        val parentId = "parent-1"
+        val p1Id = "pres-v1"
+        val p2Id = "pres-v2"
+        val pOtherId = "pres-other"
+
+        val m1Id = "med-v1"
+        val m2Id = "med-v2"
+        val mOtherId = "med-other"
+
+        val s1Id = "sched-v1"
+        val s2Id = "sched-v2"
+        val sOtherId = "sched-other"
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = p1Id,
+                parentId = parentId,
+                versionNumber = 1,
+                isLatest = false,
+                date = "2026-11-20",
+                createdAt = "2026-11-20T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = m1Id,
+                    prescriptionId = p1Id,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-20T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = s1Id,
+                    medicineId = m1Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = p2Id,
+                parentId = parentId,
+                versionNumber = 2,
+                isLatest = true,
+                date = "2026-11-22",
+                createdAt = "2026-11-22T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = m2Id,
+                    prescriptionId = p2Id,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-22T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = s2Id,
+                    medicineId = m2Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = pOtherId,
+                parentId = "parent-other",
+                versionNumber = 1,
+                isLatest = true,
+                date = "2026-11-22",
+                createdAt = "2026-11-22T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = mOtherId,
+                    prescriptionId = pOtherId,
+                    name = "Seclo",
+                    type = MedicineType.CAPSULE,
+                    foodRule = FoodRule.BEFORE,
+                    createdAt = "2026-11-22T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = sOtherId,
+                    medicineId = mOtherId,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        val now = "2026-11-24T12:00:00"
+        val rV1FuturePending = ReminderEntity("r-v1-future-pending", s1Id, "2026-11-25T08:00:00", ReminderStatus.PENDING)
+        val rV2FuturePending = ReminderEntity("r-v2-future-pending", s2Id, "2026-11-26T08:00:00", ReminderStatus.PENDING)
+        val rV1PastPending = ReminderEntity("r-v1-past-pending", s1Id, "2026-11-24T08:00:00", ReminderStatus.PENDING)
+        val rV1FutureTaken = ReminderEntity("r-v1-future-taken", s1Id, "2026-11-27T08:00:00", ReminderStatus.TAKEN, "2026-11-24T11:00:00")
+        val rV2FutureMissed = ReminderEntity("r-v2-future-missed", s2Id, "2026-11-28T08:00:00", ReminderStatus.MISSED)
+        val rOtherFuturePending = ReminderEntity("r-other-future-pending", sOtherId, "2026-11-25T08:00:00", ReminderStatus.PENDING)
+
+        reminderDao.insertReminders(
+            listOf(
+                rV1FuturePending,
+                rV2FuturePending,
+                rV1PastPending,
+                rV1FutureTaken,
+                rV2FutureMissed,
+                rOtherFuturePending
+            )
+        )
+
+        val ids = reminderDao.getFuturePendingReminderIdsByParentId(parentId, now)
+        assertEquals(setOf("r-v1-future-pending", "r-v2-future-pending"), ids.toSet())
+        assertEquals(2, ids.size)
+    }
+
+    @Test
+    fun testGetPendingReminderIdsByPrescriptionId() = runTest {
+        val p1Id = "pres-1"
+        val p2Id = "pres-2"
+        val m1Id = "med-1"
+        val m2Id = "med-2"
+        val s1Id = "sched-1"
+        val s2Id = "sched-2"
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = p1Id,
+                parentId = "parent-shared",
+                versionNumber = 1,
+                isLatest = false,
+                date = "2026-11-20",
+                createdAt = "2026-11-20T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = m1Id,
+                    prescriptionId = p1Id,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-20T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = s1Id,
+                    medicineId = m1Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = p2Id,
+                parentId = "parent-shared",
+                versionNumber = 2,
+                isLatest = true,
+                date = "2026-11-22",
+                createdAt = "2026-11-22T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = m2Id,
+                    prescriptionId = p2Id,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-22T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = s2Id,
+                    medicineId = m2Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        reminderDao.insertReminders(
+            listOf(
+                ReminderEntity("r-p1-past-pending", s1Id, "2026-11-20T08:00:00", ReminderStatus.PENDING),
+                ReminderEntity("r-p1-future-pending", s1Id, "2026-11-28T08:00:00", ReminderStatus.PENDING),
+                ReminderEntity("r-p1-taken", s1Id, "2026-11-21T08:00:00", ReminderStatus.TAKEN, "2026-11-21T08:05:00"),
+                ReminderEntity("r-p1-missed", s1Id, "2026-11-22T08:00:00", ReminderStatus.MISSED),
+                ReminderEntity("r-p2-pending", s2Id, "2026-11-25T08:00:00", ReminderStatus.PENDING)
+            )
+        )
+
+        val ids = reminderDao.getPendingReminderIdsByPrescriptionId(p1Id)
+        assertEquals(setOf("r-p1-past-pending", "r-p1-future-pending"), ids.toSet())
+        assertEquals(2, ids.size)
+    }
+
+    @Test
+    fun testGetPendingReminderIdsByMedicineId() = runTest {
+        val presId = "pres-med-test"
+        val m1Id = "med-target"
+        val m2Id = "med-sibling"
+        val s1Id = "sched-target"
+        val s2Id = "sched-sibling"
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = presId,
+                date = "2026-11-20",
+                createdAt = "2026-11-20T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = m1Id,
+                    prescriptionId = presId,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-20T08:00:00"
+                ),
+                MedicineEntity(
+                    id = m2Id,
+                    prescriptionId = presId,
+                    name = "Seclo",
+                    type = MedicineType.CAPSULE,
+                    foodRule = FoodRule.BEFORE,
+                    createdAt = "2026-11-20T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = s1Id,
+                    medicineId = m1Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                ),
+                DoseScheduleEntity(
+                    id = s2Id,
+                    medicineId = m2Id,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 1.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        reminderDao.insertReminders(
+            listOf(
+                ReminderEntity("r-m1-past-pending", s1Id, "2026-11-20T08:00:00", ReminderStatus.PENDING),
+                ReminderEntity("r-m1-future-pending", s1Id, "2026-11-28T08:00:00", ReminderStatus.PENDING),
+                ReminderEntity("r-m1-taken", s1Id, "2026-11-21T08:00:00", ReminderStatus.TAKEN, "2026-11-21T08:05:00"),
+                ReminderEntity("r-m1-missed", s1Id, "2026-11-22T08:00:00", ReminderStatus.MISSED),
+                ReminderEntity("r-m2-pending", s2Id, "2026-11-25T08:00:00", ReminderStatus.PENDING)
+            )
+        )
+
+        val ids = reminderDao.getPendingReminderIdsByMedicineId(m1Id)
+        assertEquals(setOf("r-m1-past-pending", "r-m1-future-pending"), ids.toSet())
+        assertEquals(2, ids.size)
+    }
 }

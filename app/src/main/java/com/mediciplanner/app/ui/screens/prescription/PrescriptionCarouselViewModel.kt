@@ -1,6 +1,7 @@
 package com.mediciplanner.app.ui.screens.prescription
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -1205,6 +1206,15 @@ class PrescriptionCarouselViewModel(
                     }
                 }
 
+                val stalePendingReminderIds = if (isEditMode && existingPres != null && reminderRepository != null) {
+                    reminderRepository.getFuturePendingReminderIdsByParentId(
+                        parentId = existingPres.parentId,
+                        now = nowIso
+                    )
+                } else {
+                    emptyList()
+                }
+
                 if (isEditMode && existingPres != null) {
                     prescriptionRepository.saveNewPrescriptionVersion(
                         oldPrescriptionId = existingPres.id,
@@ -1218,6 +1228,20 @@ class PrescriptionCarouselViewModel(
                         medicines = medicineEntities,
                         schedules = scheduleEntities
                     )
+                }
+
+                if (stalePendingReminderIds.isNotEmpty()) {
+                    if (reminderScheduler != null) {
+                        for (reminderId in stalePendingReminderIds) {
+                            reminderScheduler.cancelReminder(reminderId)
+                        }
+                    } else {
+                        Log.d(
+                            "PrescriptionCarouselVM",
+                            "reminderScheduler is null; skipping alarm cancellation for ${stalePendingReminderIds.size} stale reminders"
+                        )
+                    }
+                    reminderRepository?.deleteRemindersByIds(stalePendingReminderIds)
                 }
 
                 // 4. INTEGRATION: Generate Reminders for the duration and schedule alarms according to intervalDays
@@ -1513,7 +1537,20 @@ class PrescriptionCarouselViewModel(
     fun deletePrescription(prescriptionId: String, onDeleted: () -> Unit = {}): kotlinx.coroutines.Job {
         return viewModelScope.launch {
             try {
+                val pendingReminderIds = reminderRepository?.getPendingReminderIdsByPrescriptionId(prescriptionId).orEmpty()
                 prescriptionRepository.deletePrescriptionById(prescriptionId)
+                if (pendingReminderIds.isNotEmpty()) {
+                    if (reminderScheduler != null) {
+                        for (reminderId in pendingReminderIds) {
+                            reminderScheduler.cancelReminder(reminderId)
+                        }
+                    } else {
+                        Log.d(
+                            "PrescriptionCarouselVM",
+                            "reminderScheduler is null; skipping alarm cancellation for deleted prescription $prescriptionId"
+                        )
+                    }
+                }
                 if (_editingPrescriptionId.value == prescriptionId) {
                     resetDraft()
                 }
@@ -1527,7 +1564,20 @@ class PrescriptionCarouselViewModel(
     fun deleteMedicine(medicine: MedicineEntity, onDeleted: () -> Unit = {}): kotlinx.coroutines.Job {
         return viewModelScope.launch {
             try {
+                val pendingReminderIds = reminderRepository?.getPendingReminderIdsByMedicineId(medicine.id).orEmpty()
                 prescriptionRepository.deleteMedicine(medicine)
+                if (pendingReminderIds.isNotEmpty()) {
+                    if (reminderScheduler != null) {
+                        for (reminderId in pendingReminderIds) {
+                            reminderScheduler.cancelReminder(reminderId)
+                        }
+                    } else {
+                        Log.d(
+                            "PrescriptionCarouselVM",
+                            "reminderScheduler is null; skipping alarm cancellation for deleted medicine ${medicine.id}"
+                        )
+                    }
+                }
                 onDeleted()
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage

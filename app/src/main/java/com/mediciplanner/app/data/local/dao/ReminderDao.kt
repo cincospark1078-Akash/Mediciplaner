@@ -45,4 +45,41 @@ interface ReminderDao {
 
     @Query("SELECT * FROM reminders WHERE status = 'PENDING'")
     suspend fun getAllPendingReminders(): List<ReminderEntity>
+
+    @Query("""
+        SELECT r.id
+        FROM reminders r
+        INNER JOIN dose_schedules ds ON r.doseScheduleId = ds.id
+        INNER JOIN medicines m ON ds.medicineId = m.id
+        INNER JOIN prescriptions p ON m.prescriptionId = p.id
+        WHERE p.parentId = :parentId
+          AND r.status = 'PENDING'
+          AND r.scheduledAt > :now
+    """)
+    suspend fun getFuturePendingReminderIdsByParentId(parentId: String, now: String): List<String>
+
+    @Query("""
+        SELECT r.id
+        FROM reminders r
+        INNER JOIN dose_schedules ds ON r.doseScheduleId = ds.id
+        INNER JOIN medicines m ON ds.medicineId = m.id
+        INNER JOIN prescriptions p ON m.prescriptionId = p.id
+        WHERE p.id = :prescriptionId
+          AND r.status = 'PENDING'
+    """)
+    suspend fun getPendingReminderIdsByPrescriptionId(prescriptionId: String): List<String>
+
+    @Query("""
+        SELECT r.id
+        FROM reminders r
+        INNER JOIN dose_schedules ds ON r.doseScheduleId = ds.id
+        INNER JOIN medicines m ON ds.medicineId = m.id
+        INNER JOIN prescriptions p ON m.prescriptionId = p.id
+        WHERE m.id = :medicineId
+          AND r.status = 'PENDING'
+    """)
+    suspend fun getPendingReminderIdsByMedicineId(medicineId: String): List<String>
+
+    @Query("DELETE FROM reminders WHERE id IN (:ids)")
+    suspend fun deleteRemindersByIds(ids: List<String>)
 }

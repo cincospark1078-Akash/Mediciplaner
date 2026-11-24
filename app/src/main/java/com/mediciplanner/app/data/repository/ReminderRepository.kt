@@ -76,4 +76,23 @@ class ReminderRepository(
     suspend fun getAllPendingReminders(): List<ReminderEntity> {
         return reminderDao.getAllPendingReminders()
     }
+
+    suspend fun getFuturePendingReminderIdsByParentId(parentId: String, now: String): List<String> {
+        return reminderDao.getFuturePendingReminderIdsByParentId(parentId, now)
+    }
+
+    suspend fun getPendingReminderIdsByPrescriptionId(prescriptionId: String): List<String> {
+        return reminderDao.getPendingReminderIdsByPrescriptionId(prescriptionId)
+    }
+
+    suspend fun getPendingReminderIdsByMedicineId(medicineId: String): List<String> {
+        return reminderDao.getPendingReminderIdsByMedicineId(medicineId)
+    }
+
+    suspend fun deleteRemindersByIds(ids: List<String>) {
+        if (ids.isEmpty()) return
+        ids.chunked(500).forEach { chunk ->
+            reminderDao.deleteRemindersByIds(chunk)
+        }
+    }
 }
