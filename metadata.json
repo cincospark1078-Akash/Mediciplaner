@@ -1,0 +1,8 @@
+{
+  "name": "Remix_17 MediciPlanner",
+  "description": "MediciPlanner is a native Android health and medication planner with personalized theme tokens and modular architecture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

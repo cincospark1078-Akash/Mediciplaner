@@ -1,0 +1,624 @@
+<resources>
+    <string name="app_name">MediciPlanner</string>
+    <string name="app_name_bengali">মেডিসিপ্ল্যানার</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">হোম</string>
+    <string name="nav_prescription">প্রেসক্রিপশন</string>
+    <string name="nav_track">ট্র্যাক</string>
+    <string name="nav_followup">ফলো-আপ</string>
+
+    <!-- Screen Headers -->
+    <string name="home_title">দৈনিক সময়সূচী</string>
+    <string name="home_subtitle">আজকের ওষুধের তালিকা ও সুস্থতা পরিকল্পনা</string>
+
+    <string name="prescription_title">প্রেসক্রিপশন</string>
+    <string name="prescription_subtitle">সক্রিয় ওষুধ ও প্রেসক্রিপশন ট্র্যাকিং</string>
+
+    <string name="track_title">ওষুধের ট্র্যাকিং</string>
+    <string name="track_subtitle">আজকের ডোজ ও অগ্রগতি পর্যবেক্ষণ করুন</string>
+
+    <string name="followup_title">ফলো-আপ</string>
+    <string name="followup_subtitle">ডাক্তারের অ্যাপয়েন্টমেন্ট এবং টেস্টের সময়সূচী</string>
+
+    <!-- Theme Picker & Onboarding -->
+    <string name="theme_picker_title">থিম নির্বাচন করুন</string>
+    <string name="theme_picker_subtitle">আপনার পছন্দ অনুযায়ী সুন্দর কালার থিম বেছে নিন</string>
+    <string name="theme_male_title">পুরুষ</string>
+    <string name="theme_male_desc">শান্ত ও মনোরম মেডিকেল ব্লু কালার থিম</string>
+    <string name="theme_female_title">মহিলা</string>
+    <string name="theme_female_desc">উষ্ণ ল্যাভেন্ডার-ব্লু কালার থিম</string>
+    <string name="theme_neutral_title">সাধারণ</string>
+    <string name="theme_neutral_desc">সবার জন্য উপযোগী ব্যালেন্সড স্কাই ব্লু থিম</string>
+    <string name="theme_continue_button">সংরক্ষণ ও এগিয়ে যান</string>
+    <string name="theme_current_tag">নির্বাচিত</string>
+    <string name="theme_change_action">থিম পরিবর্তন করুন</string>
+
+    <!-- Empty States -->
+    <string name="empty_schedule_title">আজ কোনো ওষুধের সময়সূচী নেই</string>
+    <string name="empty_schedule_desc">প্রেসক্রিপশন যোগ করার পর আপনার দৈনিক ডোজ রিমাইন্ডার এখানে প্রদর্শিত হবে।</string>
+
+    <string name="empty_prescription_title">কোনো প্রেসক্রিপশন নেই</string>
+    <string name="empty_prescription_desc">নতুন প্রেসক্রিপশন যোগ করে ওষুধের সময়সূচী নির্ধারণ করুন।</string>
+
+    <string name="empty_track_title">কোনো ডোজ ট্র্যাক করা হয়নি</string>
+    <string name="empty_track_desc">আজকের ওষুধের ডোজ এবং অগ্রগতি এখানে দেখা যাবে।</string>
+
+    <string name="empty_followup_title">কোনো ফলো-আপ নেই</string>
+    <string name="empty_followup_desc">ডাক্তারের অ্যাপয়েন্টমেন্ট এবং টেস্টের সময়সূচী এখানে দেখা যাবে।</string>
+
+    <!-- Foundation Actions & Badges -->
+    <string name="action_add">নতুন যোগ করুন</string>
+    <string name="action_explore">অন্বেষণ করুন</string>
+    <string name="action_settings">সেটিংস</string>
+    <string name="badge_foundation_phase">মেডিপ্ল্যানার</string>
+
+    <!-- Phase 3 Carousel Strings (Bengali Default) -->
+    <string name="carousel_title">প্রেসক্রিপশন উইজার্ড</string>
+    <string name="carousel_step_counter">ধাপ %1$d / %2$d</string>
+    <string name="carousel_step_bengali">ধাপ %1$s/৪</string>
+    <string name="carousel_card1_shortcut">কার্ড ১</string>
+    <string name="carousel_card1_shortcut_desc">তারিখ সেট করতে কার্ড ১-এ যান</string>
+    <string name="error_go_to_card1_for_date">তারিখ সেট করতে কার্ড ১-এ যান</string>
+    <string name="scan_prompt_set_date">সংরক্ষণের আগে কার্ড ১ থেকে তারিখ সিলেক্ট করুন</string>
+    <string name="scan_prompt_go_card1">তারিখ দিন</string>
+    <string name="carousel_edit_mode_badge">এডিট মোড</string>
+    <string name="card2_added_medicines_label">যুক্ত করা ওষুধসমূহ</string>
+    <string name="card2_added_medicines_accordion">যুক্ত করা ওষুধসমূহ (%1$s)</string>
+    <string name="card2_medicine_default_name">ওষুধ %1$s</string>
+    <string name="card2_edit_medicine_desc">ওষুধ এডিট করুন</string>
+    <string name="card2_delete_medicine_desc">ওষুধটি সরান</string>
+    <string name="card2_accordion_expand_desc">তালিকা দেখুন</string>
+    <string name="card2_accordion_collapse_desc">তালিকা লুকান</string>
+    <string name="medicine_switcher_label">ওষুধ নির্বাচন করুন</string>
+    <string name="medicine_switcher_count">(%1$sটি)</string>
+
+    <!-- Card 1: Base Info -->
+    <string name="card1_title">সাধারণ তথ্য</string>
+    <string name="card1_subtitle">প্রেসক্রিপশনের তারিখ ও চিকিৎসকের তথ্য দিন</string>
+    <string name="field_date">প্রেসক্রিপশনের তারিখ *</string>
+    <string name="field_date_placeholder">তারিখ নির্বাচন করুন</string>
+    <string name="field_doctor_name">চিকিৎসকের নাম (ঐচ্ছিক)</string>
+    <string name="field_doctor_placeholder">ডাক্তারের নাম লিখুন</string>
+    <string name="field_location">চেম্বার / হাসপাতালের ঠিকানা (ঐচ্ছিক)</string>
+    <string name="field_location_placeholder">হাসপাতাল বা ক্লিনিকের নাম</string>
+    <string name="error_date_required">তারিখ সিলেক্ট করুন</string>
+    <string name="action_scan_prescription">প্রেস্ক্রিপশন স্ক্যান করুন</string>
+    <string name="ocr_scanning_in_progress">ছবি স্ক্যান হচ্ছে...</string>
+    <string name="ocr_scanned_text_title">স্ক্যান করা টেক্সট</string>
+    <string name="ocr_view_full_text">পুরো টেক্সট দেখুন</string>
+    <string name="ocr_hide_full_text">সংক্ষিপ্ত করুন</string>
+    <string name="ocr_add_medicine_from_text">টেক্সট থেকে ওষুধ যোগ করুন</string>
+    <string name="ocr_detected_medicines_title">শনাক্তকৃত ওষুধসমূহ</string>
+    <string name="ocr_add_to_prescription">প্রেসক্রিপশনে যোগ করুন</string>
+    <string name="ocr_no_medicines_detected">টেক্সট থেকে কোনো ওষুধ শনাক্ত করা যায়নি</string>
+    <string name="action_add_prescription_unified">প্রেস্ক্রিপশন যোগ করুন</string>
+    <string name="ocr_scan_with_camera">ক্যামেরা দিয়ে স্ক্যান করুন</string>
+    <string name="ocr_upload_from_gallery">গ্যালারি থেকে আপলোড করুন</string>
+    <string name="ocr_review_title">ওষুধগুলো যাচাই করুন</string>
+    <string name="ocr_review_subtitle">স্ক্যান করা ওষুধের নাম, ডোজ ও খাবারের নিয়ম প্রয়োজনমতো সংশোধন করুন</string>
+    <string name="ocr_review_original_image">মূল প্রেসক্রিপশনের ছবি (দেখতে ট্যাপ করুন)</string>
+    <string name="ocr_review_name_label">ওষুধের নাম</string>
+    <string name="ocr_review_dose_label">ডোজ (যেমন: 1+0+1)</string>
+    <string name="ocr_review_dose_placeholder">যেমন: 0+1+0 বা 0+1/2+0</string>
+    <string name="ocr_review_delete_medicine">ওষুধটি মুছে ফেলুন</string>
+    <string name="ocr_review_add_new_medicine">নতুন ওষুধ যোগ করুন</string>
+    <string name="ocr_review_add_all">সব যোগ করুন</string>
+    <string name="ocr_review_cancel">বাতিল করুন</string>
+    <string name="ocr_review_empty_title">কোনো ওষুধ শনাক্ত হয়নি</string>
+    <string name="ocr_review_empty_desc">নিচের \u0027নতুন ওষুধ যোগ করুন\u0027 বাটনে ট্যাপ করে ম্যানুয়ালি ওষুধ যোগ করুন</string>
+    <string name="ocr_review_empty_error">কমপক্ষে একটি ওষুধের নাম লিখুন</string>
+    <string name="ocr_review_medicine_count">%1$sটি ওষুধ</string>
+
+    <!-- Card 2: Medicine Details -->
+    <string name="card2_title">ওষুধের বিবরণ</string>
+    <string name="card2_subtitle">ওষুধের নাম, ধরন ও মাত্রা উল্লেখ করুন</string>
+    <string name="field_medicine_name">ওষুধের নাম *</string>
+    <string name="field_medicine_placeholder">যেমন: প্যারাসিটামল</string>
+    <string name="field_medicine_type">ওষুধের ধরন *</string>
+    <string name="field_strength">মাত্রা / শক্তি (ঐচ্ছিক)</string>
+    <string name="field_strength_placeholder">যেমন: ৫০০</string>
+    <string name="field_strength_unit">মাত্রার একক</string>
+    <string name="error_name_required">ওষুধের নাম লিখুন</string>
+    <string name="error_type_required">ওষুধের ধরন নির্বাচন করুন</string>
+
+    <!-- Card 3: Schedule & Dose -->
+    <string name="card3_title">সময়সূচী ও ডোজ</string>
+    <string name="card3_subtitle">ওষুধ সেবনের সময় এবং পরিমাণ নির্ধারণ করুন</string>
+    <string name="field_dose_slots">সেবনের সময় নির্বাচন করুন *</string>
+    <string name="field_time_picker">সময়</string>
+    <string name="field_dose_amount">ডোজ পরিমাণ *</string>
+    <string name="field_dose_amount_placeholder">যেমন: ১</string>
+    <string name="field_dose_unit">ডোজের একক *</string>
+    <string name="field_food_rule">খাবারের নিয়ম</string>
+    <string name="rule_consumption">সেবনের নিয়ম</string>
+    <string name="rule_administration">গ্রহণের নিয়ম</string>
+    <string name="error_slot_required">সেবনের সময় সিলেক্ট করুন</string>
+    <string name="slot_details_header">ডোজ বিস্তারিত</string>
+
+    <!-- Card 4: Duration & Notes -->
+    <string name="card4_title">মেয়াদ ও নোট</string>
+    <string name="card4_subtitle">ওষুধ সেবনের মেয়াদ ও অন্যান্য নির্দেশনা</string>
+    <string name="field_duration_days">মেয়াদ (দিন)</string>
+    <string name="field_duration_placeholder">যেমন: ৭</string>
+    <string name="field_notes">বিশেষ নির্দেশনা / নোট (ঐচ্ছিক)</string>
+    <string name="field_notes_placeholder">খাবার পর প্রচুর পানি পান করুন...</string>
+    <string name="duration_decrement">কমান</string>
+    <string name="duration_increment">বাড়ান</string>
+    <string name="field_stock_quantity">আপনার কাছে কত পিস আছে?</string>
+    <string name="field_stock_placeholder">যেমন: 30</string>
+    <string name="stock_decrement">কমান</string>
+    <string name="stock_increment">বাড়ান</string>
+    <string name="field_interval_label">কত দিন পর পর খাবেন? *</string>
+    <string name="interval_everyday">প্রতিদিন</string>
+    <string name="interval_daily">প্রতি ১ দিন পর</string>
+    <string name="interval_every_2_days">প্রতি ২ দিন পর</string>
+    <string name="interval_every_3_days">প্রতি ৩ দিন পর</string>
+    <string name="interval_weekly">সাপ্তাহিক</string>
+    <string name="interval_custom">কাস্টম</string>
+    <string name="interval_custom_dialog_title">কাস্টম বিরতি (দিন)</string>
+    <string name="interval_custom_placeholder">যেমন: ৪, ১৪ বা ৩০</string>
+    <string name="interval_custom_confirm">ঠিক আছে</string>
+    <string name="interval_custom_cancel">বাতিল</string>
+    <string name="interval_custom_badge">প্রতি %1$s দিন পর পর</string>
+    <string name="error_interval_greater_than_duration">মেয়াদের চেয়ে বেশি বিরতি দেয়া যাবে না</string>
+
+    <!-- Carousel Footer & Actions -->
+    <string name="action_next">পরবর্তী</string>
+    <string name="action_next_medicine">পরবর্তী ওষুধ</string>
+    <string name="action_previous">পূর্ববর্তী</string>
+    <string name="action_add_more">আরও ওষুধ যোগ করুন</string>
+    <string name="action_review_save">যাচাই ও সংরক্ষণ করুন</string>
+    <string name="action_saving">সংরক্ষণ করা হচ্ছে...</string>
+    <string name="save_success_message">প্রেসক্রিপশন সফলভাবে সংরক্ষিত হয়েছে</string>
+    <string name="prescription_saved_success">আপনার প্রেস্ক্রিপশন সফলভাবে সংরক্ষণ করা হয়েছে</string>
+    <string name="error_save_generic">প্রেসক্রিপশন সংরক্ষণে সমস্যা হয়েছে</string>
+    <string name="medicines_added_count">%1$d টি ওষুধ যুক্ত হয়েছে</string>
+    <string name="close_carousel">বন্ধ করুন</string>
+
+    <!-- Medicine Types -->
+    <string name="type_tablet">ট্যাবলেট</string>
+    <string name="type_capsule">ক্যাপসুল</string>
+    <string name="type_syrup">সিরাপ</string>
+    <string name="type_drops">ড্রপস</string>
+    <string name="type_inhaler">ইনহেলার</string>
+    <string name="type_ointment">মলম</string>
+    <string name="type_injection">ইনজেকশন</string>
+
+    <!-- Dose Slots -->
+    <string name="slot_morning">সকাল</string>
+    <string name="slot_noon">দুপুর</string>
+    <string name="slot_afternoon">বিকেল</string>
+    <string name="slot_evening">সন্ধ্যা</string>
+    <string name="slot_night">রাত</string>
+    <string name="slot_custom">কাস্টম</string>
+
+    <!-- Food Rules -->
+    <string name="food_before">খাবারের আগে</string>
+    <string name="food_after">খাবারের পরে</string>
+    <string name="food_with">খাবারের সাথে</string>
+    <string name="food_empty">খালি পেটে</string>
+
+    <!-- Units -->
+    <string name="unit_mg">mg</string>
+    <string name="unit_mcg">mcg</string>
+    <string name="unit_mg_5ml">mg/5mL</string>
+    <string name="unit_mg_ml">mg/mL</string>
+    <string name="unit_mcg_puff">mcg/puff</string>
+    <string name="unit_iu_ml">IU/mL</string>
+    <string name="unit_percent">%</string>
+    <string name="unit_mg_g">mg/g</string>
+    <string name="unit_pcs">pcs</string>
+    <string name="unit_ti">টি</string>
+    <string name="unit_ml">mL</string>
+    <string name="unit_tsp">tsp</string>
+    <string name="unit_drop">drop</string>
+    <string name="unit_puff">puff</string>
+    <string name="unit_unit">unit</string>
+    <string name="unit_application">application</string>
+
+    <!-- Phase 4 Home Screen Strings (Bengali Default) -->
+    <string name="greeting_default">আসসালামু আলাইকুম</string>
+    <string name="greeting_female">শুভ সকাল</string>
+    <string name="notifications_content_desc">বিজ্ঞপ্তি</string>
+    <string name="next_dose_label">পরবর্তী ডোজ</string>
+    <string name="action_mark_taken">গ্রহণ করেছি</string>
+    <string name="next_reminder_all_completed">আজকের সব ডোজ সম্পন্ন!</string>
+    <string name="next_reminder_all_completed_desc">আপনি সময়মতো সব ওষুধ খেয়েছেন।</string>
+    <string name="next_dose_empty_title">কোনো আসন্ন ডোজ নেই</string>
+    <string name="next_dose_empty_desc">আজকের জন্য আপনার আর কোনো ডোজ বাকি নেই</string>
+    <string name="progress_title">আজকের অগ্রগতি</string>
+    <string name="progress_not_started">এখনো শুরু হয়নি</string>
+    <string name="doses_completed">ডোজ সম্পন্ন</string>
+    <string name="today_medicines_header">আজকের ওষুধ</string>
+    <string name="empty_today_medicines">আজ কোনো ওষুধ নেই</string>
+    <string name="status_taken">গৃহীত</string>
+    <string name="status_pending">অপেক্ষমান</string>
+    <string name="status_missed">মিসড</string>
+    <string name="action_more_options">আরও বিকল্প</string>
+    <string name="action_completed">সম্পন্ন</string>
+    <string name="field_strength_hint">উদাহরণ: 500</string>
+    <string name="error_strength_required">শক্তি প্রদান করুন</string>
+    <string name="error_strength_unit_required">একক নির্বাচন করুন</string>
+    <string name="field_medicine_image">ওষুধের ছবি (ঐচ্ছিক)</string>
+    <string name="action_upload_image">ছবি আপলোড করুন</string>
+    <string name="scroll_types_left">বামে স্ক্রোল করুন</string>
+    <string name="scroll_types_right">ডানে স্ক্রোল করুন</string>
+    <string name="medicine_image_preview">ওষুধের ছবির প্রিভিউ</string>
+    <string name="action_remove_photo">ছবি সরান</string>
+    <string name="dose_hint_example">যেমন: 1</string>
+    <string name="field_dose_amount_hint">কতটুকু খাবেন?</string>
+    <string name="error_dose_amount_required">ডোজ পরিমাণ প্রদান করুন</string>
+    <string name="error_dose_unit_required">ডোজ একক নির্বাচন করুন</string>
+    <string name="error_duration_required">মেয়াদ প্রদান করুন</string>
+    <string name="swatch_primary">Primary কালার</string>
+    <string name="swatch_container">Primary Container</string>
+    <string name="swatch_surface">Surface কালার</string>
+    <string name="swatch_text">Text কালার</string>
+    <string name="swatch_primary_bn">প্রাইমারি</string>
+    <string name="swatch_container_bn">কন্টেইনার</string>
+    <string name="swatch_surface_bn">সারফেস</string>
+    <string name="swatch_text_bn">টেক্সট</string>
+    <string name="strength_helper_text">বোতল বা মোড়ক দেখে মাত্রা লিখুন</string>
+    <string name="medicine_detail_duration">%1$s দিন</string>
+    <string name="medicine_detail_time_slot">• %1$s (%2$s) - %3$s %4$s - %5$s</string>
+    <string name="medicine_stock_badge">স্টক: %1$s পিস</string>
+    <string name="version_short">সংস্করণ</string>
+
+    <!-- Track & Date Strip Strings -->
+    <string name="day_sun">রবি</string>
+    <string name="day_mon">সোম</string>
+    <string name="day_tue">মঙ্গল</string>
+    <string name="day_wed">বুধ</string>
+    <string name="day_thu">বৃহঃ</string>
+    <string name="day_fri">শুক্র</string>
+    <string name="day_sat">শনি</string>
+    <string name="track_schedule_title">সময়সূচী</string>
+    <string name="track_missed_doses_title">মিসড ডোজ সতর্কতা</string>
+    <string name="track_no_missed_doses">আজ কোনো মিসড ডোজ নেই, সুস্থ থাকুন!</string>
+    <string name="track_missed_doses_count">%1$sটি ডোজ মিস হয়েছে</string>
+    <string name="track_missed_doses_summary">আজ %1$sটি ডোজ মিস হয়েছে</string>
+    <string name="track_all_good_message">আজ কোনো ডোজ মিস হয়নি, সময়মতো সব খাওয়া হয়েছে!</string>
+    <string name="track_missed_tap_action">বিস্তারিত দেখতে ট্যাপ করুন</string>
+    <string name="track_date_strip_today">আজ</string>
+    <string name="track_all_completed">আজকের সব ওষুধ গ্রহণ সম্পন্ন</string>
+    <string name="track_status_upcoming">আসন্ন</string>
+    <string name="track_recorded_doses_title">ট্র্যাক করা ওষুধ</string>
+    <string name="status_pending_label">অপেক্ষমাণ</string>
+    <string name="status_missed_label">মিস হয়েছে</string>
+    <string name="status_taken_label">গৃহীত</string>
+    <string name="status_taken_time">গৃহীত · %1$s</string>
+    <string name="missed_sheet_title">মিস হওয়া ওষুধের তালিকা</string>
+    <string name="missed_sheet_subtitle">সময়সূচী অনুযায়ী মিসড ডোজগুলো গ্রহণ করুন</string>
+    <string name="action_take_all_missed">সবগুলো গ্রহণ সম্পন্ন</string>
+    <string name="action_take_now">গ্রহণ করেছি</string>
+    <string name="track_history_header">ওষুধের ইতিহাস</string>
+
+    <!-- Prescription Strings -->
+    <string name="prescription_doctor_label">চিকিৎসক</string>
+    <string name="prescription_date_label">তারিখ</string>
+    <string name="prescription_medicines_count">%1$sটি ওষুধ</string>
+    <string name="prescription_add_button">নতুন প্রেসক্রিপশন যোগ করুন</string>
+    <string name="prescription_fab_new">নতুন প্রেসক্রিপশন</string>
+    <string name="prescription_no_doctor">ডাক্তার উল্লেখ নেই</string>
+    <string name="prescription_edit">এডিট করুন</string>
+    <string name="prescription_delete">মুছে ফেলুন</string>
+    <string name="prescription_delete_confirm_title">প্রেসক্রিপশন মুছে ফেলবেন?</string>
+    <string name="prescription_delete_confirm_desc">আপনি কি নিশ্চিত যে এই প্রেসক্রিপশন এবং এর সকল ওষুধ মুছে ফেলতে চান?</string>
+    <string name="prescription_cancel">বাতিল</string>
+    <string name="prescription_details_title">প্রেসক্রিপশনের বিবরণ</string>
+    <string name="prescription_medicines_header">প্রেসক্রিপশনের ওষুধসমূহ</string>
+    <string name="prescription_view_details">বিস্তারিত দেখুন</string>
+    <string name="prescription_version_current">সংস্করণ: V%1$d</string>
+    <string name="prescription_version_history">ভার্সন হিস্ট্রি</string>
+    <string name="prescription_version_history_title">সংস্করণ ইতিহাস</string>
+    <string name="prescription_version_latest">বর্তমান সংস্করণ</string>
+    <string name="prescription_version_readonly_notice">এটি একটি পুরনো সংস্করণ (শুধুমাত্র দেখার জন্য)</string>
+    <string name="prescription_version_back_to_latest">বর্তমান সংস্করণে যান</string>
+    <string name="prescription_no_changes">কোনো পরিবর্তন করা হয়নি</string>
+    <string name="prescription_menu_edit">প্রেসক্রিপশন এডিট করুন</string>
+    <string name="prescription_menu_delete">প্রেসক্রিপশন মুছে ফেলুন</string>
+    <string name="prescription_add_medicine_cta">+ নতুন ওষুধ যোগ করুন</string>
+    <string name="medicine_menu_edit">এডিট করুন</string>
+    <string name="medicine_menu_delete">মুছে ফেলুন</string>
+    <string name="medicine_delete_confirm_title">ওষুধ মুছে ফেলবেন?</string>
+    <string name="medicine_delete_confirm_desc">আপনি কি নিশ্চিত যে এই ওষুধটি তালিকা থেকে মুছে ফেলতে চান?</string>
+    <string name="medicine_delete_confirm_with_name">আপনি কি নিশ্চিত যে \'%1$s\' ওষুধটি তালিকা থেকে মুছে ফেলতে চান?</string>
+    <string name="prescription_no_previous_versions">কোনো পূর্ববর্তী সংস্করণ নেই</string>
+    <string name="badge_new">New</string>
+    <string name="badge_edit">Edit</string>
+
+    <!-- Follow-up Strings -->
+    <string name="followup_header_title">ফলো-আপ</string>
+    <string name="followup_header_subtitle">ডাক্তারের অ্যাপয়েন্টমেন্ট এবং টেস্টের সময়সূচী</string>
+    <string name="followup_tab_upcoming">আসন্ন</string>
+    <string name="followup_tab_history">ইতিহাস</string>
+    <string name="followup_time_label">রিমাইন্ডার সময়</string>
+    <string name="followup_time_default">09:00 AM</string>
+    <string name="followup_action_mark_completed">সম্পন্ন করুন</string>
+    <string name="followup_status_completed">সম্পন্ন</string>
+    <string name="doctor_visit_completed">ডাক্তার ভিজিট সম্পন্ন হয়েছে</string>
+    <string name="test_completed">টেস্ট সম্পন্ন হয়েছে</string>
+    <string name="followup_completed_on">সম্পন্ন: %1$s</string>
+    <string name="empty_followup_upcoming_title">কোনো আসন্ন ফলো-আপ নেই</string>
+    <string name="empty_followup_upcoming_desc">নতুন ডাক্তার ভিজিট বা টেস্টের সময়সূচী যোগ করুন।</string>
+    <string name="empty_followup_history_title">কোনো সম্পন্ন ফলো-আপ নেই</string>
+    <string name="empty_followup_history_desc">আপনার অতীতের সম্পন্ন ফলো-আপের ইতিহাস এখানে সংরক্ষিত থাকবে।</string>
+    <string name="followup_type_doctor">ডাক্তার ভিজিট</string>
+    <string name="followup_type_test">টেস্ট</string>
+    <string name="followup_add_action">নতুন ফলো-আপ</string>
+    <string name="followup_reminder_on">রিমাইন্ডার চালু</string>
+    <string name="followup_reminder_time_hint">নির্ধারিত সময়ে নোটিফিকেশন পাঠানো হবে</string>
+    <string name="followup_dialog_title">নতুন ফলো-আপ</string>
+    <string name="followup_edit_dialog_title">ফলো-আপ সম্পাদনা</string>
+    <string name="followup_input_title">শিরোনাম / ডাক্তারের নাম *</string>
+    <string name="followup_input_title_placeholder">ডাক্তারের নাম বা টেস্টের নাম লিখুন</string>
+    <string name="followup_input_date">তারিখ (YYYY-MM-DD) *</string>
+    <string name="followup_input_note">পরামর্শ বা টেস্টের বিবরণ (ঐচ্ছিক)</string>
+    <string name="followup_save_action">সেভ করুন</string>
+    <string name="followup_delete_action">মুছে ফেলুন</string>
+    <string name="followup_cancel_action">বাতিল</string>
+    <string name="followup_type_label">ধরণ</string>
+    <string name="followup_doctor_name_label">ডাক্তারের নাম *</string>
+    <string name="followup_doctor_name_placeholder">ডাক্তারের নাম লিখুন</string>
+    <string name="followup_hospital_clinic_label">হাসপাতাল বা ক্লিনিক (ঐচ্ছিক)</string>
+    <string name="followup_hospital_clinic_placeholder">হাসপাতাল বা ক্লিনিকের নাম</string>
+    <string name="followup_error_doctor_name_required">অনুগ্রহ করে ডাক্তারের নাম লিখুন</string>
+    <string name="followup_test_name_label">টেস্টের নাম *</string>
+    <string name="followup_test_name_placeholder">যেমন: Blood Test, X-Ray</string>
+    <string name="followup_test_center_label">টেস্ট সেন্টারের নাম (ঐচ্ছিক)</string>
+    <string name="followup_test_center_placeholder">টেস্ট সেন্টারের নাম</string>
+    <string name="followup_error_test_name_required">অনুগ্রহ করে টেস্টের নাম লিখুন</string>
+    <string name="followup_error_title">শিরোনাম দেওয়া আবশ্যক</string>
+    <string name="followup_error_title_required">অনুগ্রহ করে শিরোনাম লিখুন</string>
+    <string name="followup_error_type">অনুগ্রহ করে ধরন সিলেক্ট করুন</string>
+    <string name="followup_error_date">অনুগ্রহ করে তারিখ সিলেক্ট করুন</string>
+    <string name="followup_card_about_title">পরামর্শ সম্পর্কে</string>
+    <string name="followup_sample_doctor_name">বিশেষজ্ঞ চিকিৎসক</string>
+    <string name="followup_sample_doctor_specialty">কার্ডিওলজিস্ট ও মেডিসিন বিশেষজ্ঞ</string>
+    <string name="followup_sample_about">নিয়মিত রক্তচাপ পরীক্ষা ও হৃদযন্ত্রের যত্নে সঠিক সময়ে ওষুধ সেবন নিশ্চিত করুন।</string>
+
+    <!-- Notification Strings -->
+    <string name="notification_reminder_title">ওষুধ খাওয়ার সময় হয়েছে</string>
+    <string name="notification_reminder_body">আপনার ওষুধ %1$s খাওয়ার সময় হয়েছে।</string>
+    <string name="notification_reminder_body_with_time">আপনার ওষুধ %1$s খাওয়ার সময় হয়েছে (%2$s)।</string>
+    <string name="notification_followup_title">ফলো-আপ রিমাইন্ডার</string>
+    <string name="notification_followup_body">আপনার %1$s এর সময় হয়েছে।</string>
+    <string name="notification_followup_body_with_time">আপনার %1$s এর সময় হয়েছে (%2$s)।</string>
+    <string name="notification_channel_name">ওষুধের রিমাইন্ডার</string>
+    <string name="notification_channel_desc">সময়মতো ওষুধ খাওয়ার জন্য নোটিফিকেশন</string>
+    <string name="notification_low_stock_title">ওষুধের স্টক প্রায় শেষ</string>
+    <string name="notification_low_stock_body">আপনার %1$s ওষুধ প্রায় শেষ। রিফিল করুন।</string>
+    <!-- Error Strings -->
+    <string name="error_generic">কিছু একটা ভুল হয়েছে</string>
+
+    <!-- Onboarding: Splash, Welcome & Tutorial Strings -->
+    <string name="splash_tagline">সুস্থ ও সচেতন জীবনের সঙ্গী</string>
+    <string name="welcome_title">স্বাগতম</string>
+    <string name="welcome_subtitle">আপনার স্বাস্থ্য ও ওষুধ সেবনের বিশ্বস্ত সঙ্গী</string>
+    <string name="welcome_feature_1">সহজ ও নির্ভুল প্রেসক্রিপশন ব্যবস্থাপনা</string>
+    <string name="welcome_feature_2">সময়মতো নিখুঁত ওষুধ রিমাইন্ডার</string>
+    <string name="welcome_feature_3">দৈনিক অগ্রগতির সামগ্রিক ট্র্যাকিং</string>
+
+    <string name="tutorial_app_tour">অ্যাপ ট্যুর</string>
+    <string name="tutorial_skip">এড়িয়ে যান</string>
+    <string name="tutorial_get_started">শুরু করুন</string>
+    <string name="tutorial_page_desc">টিউটোরিয়াল ধাপ %1$d</string>
+
+    <string name="tutorial_page1_title">প্রেসক্রিপশন যোগ করুন</string>
+    <string name="tutorial_page1_subtitle">একটি প্রেসক্রিপশনে একাধিক ওষুধ সহজেই যোগ করুন।</string>
+
+    <string name="tutorial_page2_title">সময়মতো ওষুধ খাওয়ার রিমাইন্ডার</string>
+    <string name="tutorial_page2_subtitle">আপনার ওষুধ খাওয়ার সময় হলে অ্যাপ আপনাকে জানিয়ে দেবে।</string>
+
+    <string name="tutorial_page3_title">আজকের অগ্রগতি ট্র্যাক করুন</string>
+    <string name="tutorial_page3_subtitle">কোন ওষুধ খেয়েছেন এবং কোনটি মিস করেছেন তা এক নজরে দেখুন।</string>
+
+    <string name="tutorial_page4_title">ডাক্তারের ভিজিট ও টেস্ট</string>
+    <string name="tutorial_page4_subtitle">ডাক্তারের অ্যাপয়েন্টমেন্ট, টেস্ট এবং সব মেডিকেল রেকর্ড এক জায়গায় সংরক্ষণ করুন।</string>
+
+    <!-- Settings & Backup Strings -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_back_desc">পেছনে যান</string>
+    <string name="settings_theme_label">থিম</string>
+    <string name="settings_theme_desc">অ্যাপের রঙের রূপরেখা পরিবর্তন করুন</string>
+    <string name="settings_theme_dialog_title">থিম নির্বাচন করুন</string>
+    <string name="settings_theme_male">পুরুষ</string>
+    <string name="settings_theme_female">নারী</string>
+    <string name="settings_theme_neutral">নিরপেক্ষ</string>
+    <string name="settings_language_label">ভাষা</string>
+    <string name="settings_language_desc">ভাষা নির্ধারণ করুন</string>
+    <string name="settings_language_bn">বাংলা</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_coming_soon">শীঘ্রই আসছে</string>
+    <string name="settings_time_format_label">সময়ের ফরম্যাট</string>
+    <string name="settings_time_format_desc">১২ ঘণ্টা বা ২৪ ঘণ্টা সময় দেখানোর ধরন</string>
+    <string name="settings_time_format_12h">১২ ঘণ্টা (AM/PM)</string>
+    <string name="settings_time_format_24h">২৪ ঘণ্টা</string>
+    <string name="settings_backup_title">ডেটা ব্যাকআপ ও রিস্টোর</string>
+    <string name="settings_backup_desc">আপনার সমস্ত প্রেসক্রিপশন ও ওষুধের ডেটা সংরক্ষণ এবং পুনরুদ্ধার করুন</string>
+    <string name="settings_backup_button">ডেটা ব্যাকআপ করুন</string>
+    <string name="settings_restore_button">ডেটা রিস্টোর করুন</string>
+    <string name="settings_restore_confirm_title">সতর্কতা</string>
+    <string name="settings_restore_confirm_desc">সতর্কতা: বর্তমান সব ডেটা মুছে যাবে। আপনি কি নিশ্চিত?</string>
+    <string name="settings_restore_confirm_btn">হ্যাঁ, রিস্টোর করুন</string>
+    <string name="settings_cancel_btn">বাতিল</string>
+    <string name="settings_ok_btn">ঠিক আছে</string>
+    <string name="settings_app_name">MediciPlanner</string>
+    <string name="settings_app_version">সংস্করণ ১.০.০</string>
+    <string name="settings_backup_success_toast">ডেটা ব্যাকআপ হয়েছে। \'Downloads\' ফোল্ডারে দেখুন।</string>
+    <string name="settings_backup_error_toast">ব্যাকআপ তৈরি করা সম্ভব হয়নি</string>
+    <string name="settings_restore_in_progress_toast">ডেটা রিস্টোর হচ্ছে...</string>
+    <string name="settings_restore_error_toast">ডেটা রিস্টোর করতে সমস্যা হয়েছে</string>
+
+    <!-- Context-Aware Empty State Strings -->
+    <string name="empty_state_a_title">এখনো কোনো প্রেস্ক্রিপশন নেই</string>
+    <string name="empty_state_a_desc">আপনার প্রথম প্রেস্ক্রিপশন যোগ করে ওষুধের সময়সূচি তৈরি করুন।</string>
+    <string name="empty_state_a_cta">+ নতুন প্রেস্ক্রিপশন যোগ করুন</string>
+    <string name="empty_state_b_title">আজকের জন্য কোনো ওষুধ নেই</string>
+    <string name="empty_state_b_desc">আপনার পরবর্তী ওষুধ নির্ধারিত আছে: %1$s</string>
+    <string name="empty_state_b_cta">প্রেস্ক্রিপশন দেখুন</string>
+    <string name="empty_state_c_title">আজকের সব ডোজ সম্পন্ন!</string>
+    <string name="empty_state_c_desc">আপনি সময়মতো সব ওষুধ খেয়েছেন।</string>
+    <string name="empty_state_c_cta">ট্র্যাক হিস্ট্রি দেখুন</string>
+
+    <!-- Image & Document Viewer Strings -->
+    <string name="image_fullscreen_title">ছবি দেখুন</string>
+    <string name="image_fullscreen_close">বন্ধ করুন</string>
+    <string name="prescription_images_header">প্রেসক্রিপশনের ছবি</string>
+    <string name="prescription_images_title">প্রেসক্রিপশনের ছবি (ঐচ্ছিক)</string>
+    <string name="prescription_images_desc">প্রেসক্রিপশনের এক বা একাধিক ছবি যুক্ত করতে পারেন</string>
+    <string name="prescription_images_add_btn">যোগ করুন</string>
+    <string name="followup_documents_count">%1$s Documents</string>
+    <string name="followup_documents_label">ডকুমেন্ট</string>
+    <string name="followup_documents_title">ডকুমেন্ট / রিপোর্টের ছবি (ঐচ্ছিক)</string>
+    <string name="followup_documents_desc">প্রেসক্রিপশন, টেস্ট রিপোর্ট বা ডকুমেন্টের ছবি যুক্ত করুন</string>
+    <string name="followup_documents_add_btn">যোগ করুন</string>
+
+    <!-- Smart Personalization Strings -->
+    <string name="personalization_title">আপনার অ্যাপটি সাজান</string>
+    <string name="personalization_subtitle">আপনার পছন্দমতো অভিজ্ঞতা তৈরি করুন।</string>
+    <string name="personalization_note">আপনি পরে সেটিংস থেকে এটি পরিবর্তন করতে পারবেন।</string>
+    <string name="personalization_name_label">আপনার নাম</string>
+    <string name="personalization_name_placeholder">আপনার নাম লিখুন</string>
+    <string name="personalization_name_optional">ঐচ্ছিক</string>
+    <string name="profile_avatar_change_desc">প্রোফাইল ছবি পরিবর্তন করুন</string>
+    <string name="profile_mobile_label">মোবাইল নম্বর</string>
+    <string name="profile_mobile_placeholder">মোবাইল নম্বর লিখুন</string>
+    <string name="profile_email_label">ইমেইল</string>
+    <string name="profile_email_placeholder">ইমেইল ঠিকানা লিখুন</string>
+    <string name="profile_address_label">ঠিকানা</string>
+    <string name="profile_address_placeholder">আপনার ঠিকানা লিখুন</string>
+    <string name="personalization_greeting_label">আপনি কীভাবে সম্বোধন করতে চান?</string>
+    <string name="greeting_option_salam">আসসালামু আলাইকুম</string>
+    <string name="greeting_option_universal">শুভ সকাল/সন্ধ্যা</string>
+    <string name="greeting_option_namaskar">নমস্কার</string>
+    <string name="greeting_option_hello">Hello</string>
+    <string name="greeting_option_custom">কাস্টম</string>
+    <string name="personalization_custom_greeting_label">আপনার পছন্দের সম্বোধন লিখুন</string>
+    <string name="personalization_theme_label">আপনার পছন্দের রঙ</string>
+    <string name="personalization_start_button">শুরু করুন</string>
+    <string name="personalization_skip_button">এড়িয়ে যান</string>
+    <string name="greeting_morning">শুভ সকাল</string>
+    <string name="greeting_afternoon">শুভ দুপুর</string>
+    <string name="greeting_evening">শুভ সন্ধ্যা</string>
+
+    <!-- Accessible Time Input Dialog Strings -->
+    <string name="time_input_dialog_title">সময় লিখুন</string>
+    <string name="time_input_dialog_helper">ঘণ্টা এবং মিনিট লিখুন</string>
+    <string name="time_input_confirm">ঠিক আছে</string>
+    <string name="time_input_cancel">বাতিল</string>
+
+    <!-- Follow-up Card Field Labels -->
+    <string name="followup_card_label_doctor">ডাক্তার:</string>
+    <string name="followup_card_label_clinic">ক্লিনিক:</string>
+    <string name="followup_card_label_test">টেস্ট:</string>
+    <string name="followup_card_label_center">সেন্টার:</string>
+
+    <!-- Follow-up Details Bottom Sheet Strings -->
+    <string name="followup_details_title">ফলো-আপ বিবরণ</string>
+    <string name="followup_delete_confirm_title">ফলো-আপ মুছে ফেলবেন?</string>
+    <string name="followup_delete_confirm_desc">আপনি কি নিশ্চিত যে এই ফলো-আপটি তালিকা থেকে মুছে ফেলতে চান?</string>
+    <string name="followup_detail_date_label">তারিখ:</string>
+    <string name="followup_detail_time_label">সময়:</string>
+    <string name="followup_detail_note_label">নোট / বিবরণ</string>
+    <string name="followup_detail_type_label">ধরণ:</string>
+    <string name="followup_reminder_off">রিমাইন্ডার বন্ধ</string>
+
+    <!-- Profile Avatar, Dropdown Menu, Notification Settings & About Dialog -->
+    <string name="profile_avatar_desc">প্রোফাইল মেনু</string>
+    <string name="menu_my_profile">আমার প্রোফাইল</string>
+    <string name="menu_settings">সেটিংস</string>
+    <string name="menu_notifications">নোটিফিকেশন</string>
+    <string name="menu_about_app">অ্যাপ সম্পর্কে</string>
+    <string name="personalization_save_changes">পরিবর্তন সংরক্ষণ করুন</string>
+    <string name="notification_settings_title">নোটিফিকেশন সেটিংস</string>
+    <string name="notification_setting_medicine_title">ওষুধ খাওয়ার রিমাইন্ডার</string>
+    <string name="notification_setting_medicine_desc">নির্ধারিত সময়ে ওষুধ খাওয়ার সতর্কতা পান</string>
+    <string name="notification_setting_followup_title">ফলো-আপ ও টেস্ট রিমাইন্ডার</string>
+    <string name="notification_setting_followup_desc">ডাক্তারের ভিজিট ও টেস্টের জন্য নোটিফিকেশন পান</string>
+    <string name="notification_setting_sound_title">নোটিফিকেশন সাউন্ড</string>
+    <string name="notification_setting_sound_desc">রিমাইন্ডারের সাথে অ্যালার্ট সাউন্ড বাজবে</string>
+    <string name="notification_system_settings_btn">সিস্টেম নোটিফিকেশন সেটিংস খুলুন</string>
+    <string name="about_app_name">মেডিসিপ্ল্যানার</string>
+    <string name="about_app_version">সংস্করণ ১.০.০</string>
+    <string name="about_app_desc">মেডিসিপ্ল্যানার আপনার দৈনিক ওষুধের সময়সূচী, প্রেসক্রিপশন এবং ডাক্তারের ফলো-আপ সহজে পরিচালনা করার জন্য তৈরি একটি নিরাপদ ও অফলাইন-বান্ধব স্বাস্থ্য সহায়ক অ্যাপ।</string>
+    <string name="about_privacy_policy">Privacy Policy</string>
+    <string name="about_terms">Terms</string>
+    <string name="about_privacy_summary">আপনার সমস্ত প্রেসক্রিপশন, ওষুধ ও স্বাস্থ্য সংক্রান্ত তথ্য সম্পূর্ণরূপে আপনার ডিভাইসেই সংরক্ষিত থাকে। কোনো ব্যক্তিগত তথ্য বাইরে পাঠানো হয় না।</string>
+    <string name="about_terms_summary">এই অ্যাপটি ব্যক্তিগত ওষুধের সময়সূচী মনে রাখার সহায়তার জন্য তৈরি। কোনো চিকিৎসা সিদ্ধান্তের আগে অবশ্যই চিকিৎসকের পরামর্শ নিন।</string>
+    <string name="about_close">বন্ধ করুন</string>
+
+    <!-- Slot Filter Strings -->
+    <string name="filter_slot_all">সব</string>
+    <string name="filter_slot_empty">এই সময়ের জন্য কোনো ওষুধ নেই</string>
+
+    <!-- Slot Activation Window -->
+    <string name="slot_not_time_yet">সময় হয়নি</string>
+
+    <!-- Follow-up Draft Section -->
+    <string name="followup_draft_card_title">আপনার একটি অসম্পূর্ণ ড্রাফট আছে</string>
+    <string name="followup_draft_card_subtitle">এটি সম্পূর্ণ করতে এখানে ক্লিক করুন</string>
+
+    <!-- Action Feedback Messages with Destinations -->
+    <string name="msg_prescription_saved_with_dest">প্রেস্ক্রিপশন সেভ হয়েছে। \'প্রেস্ক্রিপশন\' ট্যাবে দেখুন।</string>
+    <string name="msg_prescription_updated_with_dest">প্রেস্ক্রিপশন আপডেট হয়েছে। \'প্রেস্ক্রিপশন\' ট্যাবে দেখুন।</string>
+    <string name="msg_prescription_deleted">প্রেস্ক্রিপশন মুছে ফেলা হয়েছে।</string>
+    <string name="msg_medicine_added_with_dest">ওষুধ যোগ হয়েছে। \'আজকের ওষুধ\'-এ দেখুন।</string>
+    <string name="msg_medicine_deleted">ওষুধ মুছে ফেলা হয়েছে।</string>
+    <string name="msg_medicine_updated_with_dest">ওষুধ আপডেট হয়েছে। \'আজকের ওষুধ\'-এ দেখুন।</string>
+    <string name="msg_image_added_removed">ছবি যোগ/মুছে ফেলা হয়েছে।</string>
+
+    <string name="msg_home_dose_taken">ডোজ সম্পন্ন হয়েছে। \'ট্র্যাক\'-এ দেখুন।</string>
+    <string name="msg_home_missed_taken">মিসড ডোজ গ্রহণ করা হয়েছে। \'ট্র্যাক\'-এ দেখুন।</string>
+    <string name="msg_slot_completed_morning">সকালের সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_slot_completed_noon">দুপুরের সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_slot_completed_afternoon">বিকেলের সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_slot_completed_evening">সন্ধ্যার সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_slot_completed_night">রাতের সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_slot_completed_custom">কাস্টম সময়ের সব ওষুধ সম্পন্ন!</string>
+
+    <!-- Follow-up & Track Feedback Messages -->
+    <string name="msg_followup_saved_with_dest">ফলো-আপ সেভ হয়েছে। \'ফলো-আপ\' ট্যাবে দেখুন।</string>
+    <string name="msg_followup_updated_with_dest">ফলো-আপ আপডেট হয়েছে। \'ফলো-আপ\' ট্যাবে দেখুন।</string>
+    <string name="msg_followup_deleted">ফলো-আপ মুছে ফেলা হয়েছে।</string>
+    <string name="msg_followup_doctor_completed_with_dest">ডাক্তার ভিজিট সম্পন্ন হয়েছে। \'ইতিহাস\'-এ দেখুন।</string>
+    <string name="msg_followup_test_completed_with_dest">টেস্ট সম্পন্ন হয়েছে। \'ইতিহাস\'-এ দেখুন।</string>
+    <string name="msg_followup_draft_saved">ড্রাফট সংরক্ষিত হয়েছে। ফর্মটি আবার খুললে পাবেন।</string>
+    <string name="msg_followup_document_added">ডকুমেন্ট যোগ হয়েছে। \'ফলো-আপ\' ডিটেইলসে দেখুন।</string>
+
+    <string name="msg_track_missed_taken">মিসড ডোজ গ্রহণ হয়েছে।</string>
+    <string name="msg_track_all_missed_taken">সব মিসড ডোজ গ্রহণ হয়েছে।</string>
+
+    <!-- Settings & Profile Feedback Messages -->
+    <string name="settings_dark_mode_label">ডার্ক মোড</string>
+    <string name="settings_dark_mode_desc">চোখের আরামের জন্য অন্ধকার থিম চালু করুন</string>
+    <string name="msg_settings_theme_changed">থিম পরিবর্তন হয়েছে।</string>
+    <string name="msg_settings_time_format_updated">সময়ের ফরম্যাট আপডেট হয়েছে।</string>
+    <string name="msg_profile_updated">প্রোফাইল আপডেট হয়েছে।</string>
+    <string name="msg_settings_restore_success">ডেটা রিস্টোর হয়েছে।</string>
+    <string name="msg_settings_dark_mode_on">ডার্ক মোড চালু হয়েছে।</string>
+    <string name="msg_settings_dark_mode_off">ডার্ক মোড বন্ধ হয়েছে।</string>
+    <string name="msg_settings_notification_toggled">নোটিফিকেশন চালু/বন্ধ হয়েছে।</string>
+    <string name="msg_about_loading">তথ্য লোড হচ্ছে।</string>
+    <string name="slot_expand">বিস্তারিত দেখুন</string>
+    <string name="slot_collapse">সংকুচিত করুন</string>
+    <string name="slot_emoji_morning">☀️</string>
+    <string name="slot_emoji_noon">🌤️</string>
+    <string name="slot_emoji_afternoon">🌇</string>
+    <string name="slot_emoji_evening">🌆</string>
+    <string name="slot_emoji_night">🌙</string>
+    <string name="slot_emoji_custom">⏰</string>
+    <string name="slot_medicines_morning">সকালের ওষুধ</string>
+    <string name="slot_medicines_noon">দুপুরের ওষুধ</string>
+    <string name="slot_medicines_afternoon">বিকেলের ওষুধ</string>
+    <string name="slot_medicines_evening">সন্ধ্যার ওষুধ</string>
+    <string name="slot_medicines_night">রাতের ওষুধ</string>
+    <string name="slot_medicines_custom">কাস্টম সময়ের ওষুধ</string>
+    <string name="msg_slot_switched_morning">আপনি এখন সকালের ওষুধে আছেন।</string>
+    <string name="msg_slot_switched_noon">আপনি এখন দুপুরের ওষুধে আছেন।</string>
+    <string name="msg_slot_switched_afternoon">আপনি এখন বিকেলের ওষুধে আছেন।</string>
+    <string name="msg_slot_switched_evening">আপনি এখন সন্ধ্যার ওষুধে আছেন।</string>
+    <string name="msg_slot_switched_night">আপনি এখন রাতের ওষুধে আছেন।</string>
+    <string name="msg_slot_switched_custom">আপনি এখন কাস্টম সময়ের ওষুধে আছেন।</string>
+</resources>

@@ -1,0 +1,203 @@
+<resources>
+    <string name="app_name">MediciPlanner</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_prescription">Recetas</string>
+    <string name="nav_track">Registro</string>
+    <string name="nav_followup">Seguimiento</string>
+
+    <!-- Screen Headers -->
+    <string name="home_title">Horario Diario</string>
+    <string name="home_subtitle">Plan diario de medicación y bienestar</string>
+
+    <string name="prescription_title">Recetas Médicas</string>
+    <string name="prescription_subtitle">Medicamentos activos y control de reposiciones</string>
+
+    <string name="track_title">Registro de Salud</string>
+    <string name="track_subtitle">Monitorea signos vitales, adherencia y síntomas</string>
+
+    <string name="followup_title">Citas y Seguimiento</string>
+    <string name="followup_subtitle">Consultas médicas y visitas programadas</string>
+
+    <!-- Theme Picker & Onboarding -->
+    <string name="theme_picker_title">Personaliza Tu Cuidado</string>
+    <string name="theme_picker_subtitle">Selecciona una paleta de colores adaptada a tu comodidad y preferencia</string>
+    <string name="theme_male_title">Masculino</string>
+    <string name="theme_male_desc">Gama azul médico sereno para una lectura clara</string>
+    <string name="theme_female_title">Femenino</string>
+    <string name="theme_female_desc">Gama lavanda y azul cálido con suave contraste</string>
+    <string name="theme_neutral_title">Neutral</string>
+    <string name="theme_neutral_desc">Paleta azul cielo equilibrada para todos</string>
+    <string name="theme_continue_button">Guardar y Continuar</string>
+    <string name="theme_current_tag">Seleccionado</string>
+    <string name="theme_change_action">Cambiar Tema</string>
+
+    <!-- Empty States -->
+    <string name="empty_schedule_title">No hay medicamentos para hoy</string>
+    <string name="empty_schedule_desc">Al agregar tus recetas, aquí aparecerán tus recordatorios y dosis diarias.</string>
+
+    <string name="empty_prescription_title">Sin recetas activas</string>
+    <string name="empty_prescription_desc">Agrega recetas de tu médico para controlar dosis, frecuencia y reposiciones.</string>
+
+    <string name="empty_track_title">Sin registros de salud aún</string>
+    <string name="empty_track_desc">Registra presión arterial, glucosa y síntomas para supervisar tu bienestar.</string>
+
+    <string name="empty_followup_title">Sin citas próximas</string>
+    <string name="empty_followup_desc">Lleva el control de consultas médicas y análisis de laboratorio en un solo lugar.</string>
+
+    <!-- Foundation Actions & Badges -->
+    <string name="action_add">Agregar</string>
+    <string name="action_explore">Explorar</string>
+    <string name="action_settings">Ajustes</string>
+    <string name="badge_foundation_phase">Fase 1 Fundación</string>
+
+    <!-- Phase 3 Carousel Strings (Spanish) -->
+    <string name="carousel_title">Asistente de Receta</string>
+    <string name="carousel_step_counter">Paso %1$d / %2$d</string>
+
+    <!-- Card 1: Base Info -->
+    <string name="card1_title">Información Básica</string>
+    <string name="card1_subtitle">Fecha de la receta y datos del médico</string>
+    <string name="field_date">Fecha de la receta *</string>
+    <string name="field_date_placeholder">Seleccionar fecha</string>
+    <string name="field_doctor_name">Nombre del médico (opcional)</string>
+    <string name="field_doctor_placeholder">Ej: Dr. Pérez</string>
+    <string name="field_location">Consultorio / Hospital (opcional)</string>
+    <string name="field_location_placeholder">Ej: Hospital Central</string>
+    <string name="error_date_required">Debe seleccionar una fecha</string>
+
+    <!-- Card 2: Medicine Details -->
+    <string name="card2_title">Detalles del Medicamento</string>
+    <string name="card2_subtitle">Nombre, tipo y concentración del fármaco</string>
+    <string name="field_medicine_name">Nombre del medicamento *</string>
+    <string name="field_medicine_placeholder">Ej: Paracetamol</string>
+    <string name="field_medicine_type">Tipo de medicamento *</string>
+    <string name="field_strength">Concentración (opcional)</string>
+    <string name="field_strength_placeholder">Ej: 500</string>
+    <string name="field_strength_unit">Unidad de concentración</string>
+    <string name="error_name_required">El nombre es obligatorio</string>
+    <string name="error_type_required">Seleccione un tipo de medicamento</string>
+
+    <!-- Card 3: Schedule & Dose -->
+    <string name="card3_title">Horario y Dosis</string>
+    <string name="card3_subtitle">Horarios y cantidad de toma</string>
+    <string name="field_dose_slots">Seleccione las tomas *</string>
+    <string name="field_time_picker">Hora</string>
+    <string name="field_dose_amount">Cantidad de dosis *</string>
+    <string name="field_dose_amount_placeholder">Ej: 1</string>
+    <string name="field_dose_unit">Unidad de dosis *</string>
+    <string name="field_food_rule">Indicación de comida</string>
+    <string name="rule_consumption">Regla de consumo</string>
+    <string name="rule_administration">Regla de administración</string>
+    <string name="error_slot_required">Seleccione al menos una toma con dosis y unidad</string>
+    <string name="slot_details_header">Detalles de la toma</string>
+
+    <!-- Card 4: Duration & Notes -->
+    <string name="card4_title">Duración y Notas</string>
+    <string name="card4_subtitle">Duración del tratamiento y notas adicionales</string>
+    <string name="field_duration_days">Duración (días)</string>
+    <string name="field_duration_placeholder">Ej: 7</string>
+    <string name="field_notes">Notas adicionales (opcional)</string>
+    <string name="field_notes_placeholder">Tomar con abundante agua...</string>
+    <string name="duration_decrement">Reducir</string>
+    <string name="duration_increment">Aumentar</string>
+
+    <!-- Carousel Footer & Actions -->
+    <string name="action_next">Siguiente</string>
+    <string name="action_previous">Anterior</string>
+    <string name="action_add_more">Añadir otro fármaco</string>
+    <string name="action_review_save">Revisar y Guardar</string>
+    <string name="action_saving">Guardando...</string>
+    <string name="save_success_message">Receta guardada exitosamente</string>
+    <string name="error_save_generic">Error al guardar la receta</string>
+    <string name="medicines_added_count">%1$d medicamentos añadidos</string>
+    <string name="close_carousel">Cerrar</string>
+
+    <!-- Medicine Types -->
+    <string name="type_tablet">Tableta</string>
+    <string name="type_capsule">Cápsula</string>
+    <string name="type_syrup">Jarabe</string>
+    <string name="type_drops">Gotas</string>
+    <string name="type_inhaler">Inhalador</string>
+    <string name="type_ointment">Pomada</string>
+    <string name="type_injection">Inyección</string>
+
+    <!-- Dose Slots -->
+    <string name="slot_morning">Mañana</string>
+    <string name="slot_noon">Mediodía</string>
+    <string name="slot_afternoon">Tarde</string>
+    <string name="slot_evening">Anochecer</string>
+    <string name="slot_night">Noche</string>
+    <string name="slot_custom">Personalizado</string>
+
+    <!-- Food Rules -->
+    <string name="food_before">Antes de comer</string>
+    <string name="food_after">Después de comer</string>
+    <string name="food_with">Con comida</string>
+    <string name="food_empty">En ayunas</string>
+
+    <!-- Units -->
+    <string name="unit_mg">mg</string>
+    <string name="unit_mcg">mcg</string>
+    <string name="unit_mg_5ml">mg/5mL</string>
+    <string name="unit_mg_ml">mg/mL</string>
+    <string name="unit_mcg_puff">mcg/puff</string>
+    <string name="unit_iu_ml">IU/mL</string>
+    <string name="unit_percent">%</string>
+    <string name="unit_mg_g">mg/g</string>
+
+    <!-- Phase 4 Home Screen Strings (Spanish) -->
+    <string name="greeting_default">Hola, bienvenido</string>
+    <string name="greeting_female">Buenos días</string>
+    <string name="notifications_content_desc">Notificaciones</string>
+    <string name="next_dose_label">Próxima dosis</string>
+    <string name="action_mark_taken">Tomada</string>
+    <string name="next_dose_empty_title">No hay dosis pendientes</string>
+    <string name="next_dose_empty_desc">Has completado tus dosis para el día de hoy</string>
+    <string name="progress_title">Progreso de hoy</string>
+    <string name="progress_not_started">Aún no iniciado</string>
+    <string name="doses_completed">dosis completadas</string>
+    <string name="today_medicines_header">Medicamentos de hoy</string>
+    <string name="empty_today_medicines">No hay medicamentos hoy</string>
+    <string name="status_taken">Tomado</string>
+    <string name="status_pending">Pendiente</string>
+    <string name="status_missed">Omitido</string>
+    <string name="action_more_options">Más opciones</string>
+    <string name="action_completed">Completado</string>
+
+    <!-- Context-Aware Empty State Strings -->
+    <string name="empty_state_a_title">Aún no hay recetas</string>
+    <string name="empty_state_a_desc">Agrega tu primera receta médica para crear tu plan de medicamentos.</string>
+    <string name="empty_state_a_cta">+ Añadir nueva receta</string>
+    <string name="empty_state_b_title">No hay medicamentos para hoy</string>
+    <string name="empty_state_b_desc">Tu próxima medicación está programada para: %1$s</string>
+    <string name="empty_state_b_cta">Ver recetas</string>
+    <string name="empty_state_c_title">¡Todas las dosis de hoy completadas!</string>
+    <string name="empty_state_c_desc">Has tomado todos tus medicamentos a tiempo.</string>
+    <string name="empty_state_c_cta">Ver historial</string>
+    <string name="slot_not_time_yet">Aún no es hora</string>
+    <string name="medicine_detail_time_slot">• %1$s (%2$s) - %3$s %4$s - %5$s</string>
+    <string name="followup_draft_card_title">Tienes un borrador incompleto</string>
+    <string name="followup_draft_card_subtitle">Toca aquí para completarlo</string>
+    <string name="slot_expand">Expandir</string>
+    <string name="slot_collapse">Contraer</string>
+    <string name="slot_emoji_morning">☀️</string>
+    <string name="slot_emoji_noon">🌤️</string>
+    <string name="slot_emoji_afternoon">🌇</string>
+    <string name="slot_emoji_evening">🌆</string>
+    <string name="slot_emoji_night">🌙</string>
+    <string name="slot_emoji_custom">⏰</string>
+    <string name="slot_medicines_morning">Medicamentos de la mañana</string>
+    <string name="slot_medicines_noon">Medicamentos del mediodía</string>
+    <string name="slot_medicines_afternoon">Medicamentos de la tarde</string>
+    <string name="slot_medicines_evening">Medicamentos del atardecer</string>
+    <string name="slot_medicines_night">Medicamentos de la noche</string>
+    <string name="slot_medicines_custom">Medicamentos de horario personalizado</string>
+    <string name="msg_slot_switched_morning">Ahora estás en los medicamentos de la mañana.</string>
+    <string name="msg_slot_switched_noon">Ahora estás en los medicamentos del mediodía.</string>
+    <string name="msg_slot_switched_afternoon">Ahora estás en los medicamentos de la tarde.</string>
+    <string name="msg_slot_switched_evening">Ahora estás en los medicamentos del atardecer.</string>
+    <string name="msg_slot_switched_night">Ahora estás en los medicamentos de la noche.</string>
+    <string name="msg_slot_switched_custom">Ahora estás en los medicamentos personalizados.</string>
+</resources>
