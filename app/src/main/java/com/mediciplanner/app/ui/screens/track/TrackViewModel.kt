@@ -260,17 +260,27 @@ class TrackViewModel(
                 reminder.id
             }
 
+            var stockOut = false
             if (!wasAlreadyTaken) {
-                val updatedMedicine = prescriptionRepository.decrementStockIfAvailable(doseItem.medicine.id)
-                if (updatedMedicine != null && updatedMedicine.stockCount == 5) {
-                    reminderScheduler?.notifyLowStock(updatedMedicine.id, updatedMedicine.name)
+                val stockResult = prescriptionRepository.decrementStockWithResult(
+                    medicineId = doseItem.medicine.id,
+                    doseAmount = doseItem.schedule.doseAmount
+                )
+                if (stockResult != null) {
+                    if (stockResult.crossedLowStockThreshold) {
+                        reminderScheduler?.notifyLowStock(stockResult.medicine.id, stockResult.medicine.name)
+                    }
+                    if (stockResult.isOutOfStock) {
+                        stockOut = true
+                    }
                 }
             }
 
             reminderScheduler?.cancelReminder(resolvedReminderId)
 
-            if (wasMissed) {
-                _toastMessage.value = TrackToastMessage(messageResId = R.string.msg_track_missed_taken)
+            when {
+                stockOut -> _toastMessage.value = TrackToastMessage(messageResId = R.string.msg_stock_finished_refill)
+                wasMissed -> _toastMessage.value = TrackToastMessage(messageResId = R.string.msg_track_missed_taken)
             }
         }
     }
@@ -281,6 +291,7 @@ class TrackViewModel(
             val missedItems = currentState.trackedDoses.filter { it.status == ReminderStatus.MISSED }
             val dateIso = currentState.selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
             val nowIso = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            var anyStockOut = false
 
             for (doseItem in missedItems) {
                 val resolvedReminderId = if (doseItem.reminderId != null) {
@@ -296,15 +307,29 @@ class TrackViewModel(
                     reminderRepository.markAsTaken(reminder.id, nowIso)
                     reminder.id
                 }
-                val updatedMedicine = prescriptionRepository.decrementStockIfAvailable(doseItem.medicine.id)
-                if (updatedMedicine != null && updatedMedicine.stockCount == 5) {
-                    reminderScheduler?.notifyLowStock(updatedMedicine.id, updatedMedicine.name)
+                val stockResult = prescriptionRepository.decrementStockWithResult(
+                    medicineId = doseItem.medicine.id,
+                    doseAmount = doseItem.schedule.doseAmount
+                )
+                if (stockResult != null) {
+                    if (stockResult.crossedLowStockThreshold) {
+                        reminderScheduler?.notifyLowStock(stockResult.medicine.id, stockResult.medicine.name)
+                    }
+                    if (stockResult.isOutOfStock) {
+                        anyStockOut = true
+                    }
                 }
                 reminderScheduler?.cancelReminder(resolvedReminderId)
             }
 
             if (missedItems.isNotEmpty()) {
-                _toastMessage.value = TrackToastMessage(messageResId = R.string.msg_track_all_missed_taken)
+                _toastMessage.value = TrackToastMessage(
+                    messageResId = if (anyStockOut) {
+                        R.string.msg_stock_finished_refill
+                    } else {
+                        R.string.msg_track_all_missed_taken
+                    }
+                )
             }
         }
     }

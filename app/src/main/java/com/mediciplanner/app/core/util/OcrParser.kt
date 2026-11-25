@@ -9,7 +9,7 @@ import com.mediciplanner.app.ui.screens.prescription.DraftSchedule
 data class ParsedMedicine(
     val name: String,
     val dose: String? = null,
-    val foodRule: FoodRule = FoodRule.AFTER,
+    val foodRule: FoodRule? = null,
     val rawText: String = "",
     val duration: String? = null,
     val strength: String? = null
@@ -216,8 +216,7 @@ object OcrParser {
                     MutableParsedEntry(
                         name = restoreOriginalSpacing(cleanedName),
                         dose = extractedDose,
-                        foodRule = extractedFoodRule ?: FoodRule.AFTER,
-                        hasExplicitFoodRule = extractedFoodRule != null,
+                        foodRule = extractedFoodRule,
                         duration = extractedDuration,
                         strength = extractedStrength,
                         rawLines = mutableListOf(rawLine)
@@ -235,9 +234,8 @@ object OcrParser {
                 if (last.duration == null && extractedDuration != null) {
                     last.duration = extractedDuration
                 }
-                if (!last.hasExplicitFoodRule && extractedFoodRule != null) {
+                if (last.foodRule == null && extractedFoodRule != null) {
                     last.foodRule = extractedFoodRule
-                    last.hasExplicitFoodRule = true
                 }
                 last.rawLines.add(rawLine)
             }
@@ -291,7 +289,8 @@ object OcrParser {
 
         val finalName = if (cleanName.isNotBlank()) cleanName else rawName
         val doseUnit = UnitHelper.getDoseUnitsForType(inferredType).firstOrNull() ?: "টি"
-        val schedules = parseSchedules(parsed.dose, doseUnit, parsed.foodRule)
+        val resolvedFoodRule = parsed.foodRule ?: FoodRule.AFTER
+        val schedules = parseSchedules(parsed.dose, doseUnit, resolvedFoodRule)
         val durationDays = parseDurationDays(parsed.duration)
 
         return DraftMedicine(
@@ -300,7 +299,7 @@ object OcrParser {
             strength = strengthValue,
             strengthUnit = strengthUnitValue,
             schedules = schedules,
-            foodRule = parsed.foodRule,
+            foodRule = resolvedFoodRule,
             durationDays = durationDays
         )
     }
@@ -563,8 +562,7 @@ object OcrParser {
     private data class MutableParsedEntry(
         val name: String,
         var dose: String?,
-        var foodRule: FoodRule,
-        var hasExplicitFoodRule: Boolean,
+        var foodRule: FoodRule?,
         var duration: String?,
         var strength: String?,
         val rawLines: MutableList<String>

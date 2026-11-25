@@ -94,6 +94,7 @@ fun PrescriptionCarouselScreen(
     val isScanningOcr by viewModel.isScanningOcr.collectAsStateWithLifecycle()
     val showOcrReview by viewModel.showOcrReview.collectAsStateWithLifecycle()
     val reviewMedicines by viewModel.reviewMedicines.collectAsStateWithLifecycle()
+    val ocrReviewErrorRes by viewModel.ocrReviewErrorRes.collectAsStateWithLifecycle()
     val pendingOcrImageUri by viewModel.pendingOcrImageUri.collectAsStateWithLifecycle()
     val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val is24Hour = timeFormat == com.mediciplanner.app.core.data.preferences.ThemePreferences.TIME_FORMAT_24H
@@ -153,6 +154,7 @@ fun PrescriptionCarouselScreen(
             onCancel = {
                 viewModel.cancelOcrReview()
             },
+            errorResId = ocrReviewErrorRes,
             modifier = modifier
         )
         return

@@ -120,8 +120,25 @@ class PrescriptionRepository(
         return prescriptionDao.getMedicineByScheduleId(scheduleId)
     }
 
-    suspend fun decrementStockIfAvailable(medicineId: String): MedicineEntity? {
-        return prescriptionDao.decrementStockIfAvailable(medicineId)
+    suspend fun getDoseScheduleById(id: String): DoseScheduleEntity? {
+        return prescriptionDao.getDoseScheduleById(id)
+    }
+
+    suspend fun decrementStockIfAvailable(medicineId: String, doseAmount: Double = 1.0): MedicineEntity? {
+        return prescriptionDao.decrementStockIfAvailable(medicineId, doseAmount)
+    }
+
+    suspend fun decrementStockWithResult(
+        medicineId: String,
+        doseAmount: Double = 1.0
+    ): com.mediciplanner.app.data.local.dao.StockDecrementResult? {
+        return prescriptionDao.decrementStockWithResult(medicineId, doseAmount)
+    }
+
+    suspend fun decrementStockForSchedule(
+        doseScheduleId: String
+    ): com.mediciplanner.app.data.local.dao.StockDecrementResult? {
+        return prescriptionDao.decrementStockForSchedule(doseScheduleId)
     }
 
     /**

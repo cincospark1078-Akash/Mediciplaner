@@ -480,5 +480,103 @@ class HomeViewModelTest {
         assertNull("Low stock notification must only fire once at 5, not at 4", shadowNm.getNotification(notifId))
         testScheduler.advanceUntilIdle()
     }
+
+    @Test
+    fun testStockDecrementsByDoseAmountCrossesLowStockThresholdAndClampsAtZero() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val today = LocalDate.now()
+        val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val nowIso = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+
+        val prescription = PrescriptionEntity(
+            id = UUID.randomUUID().toString(),
+            date = todayStr,
+            createdAt = nowIso
+        )
+        // Start with 6 pcs; morning dose is 2 pcs (6 -> 4 crosses <= 5), afternoon is 3 pcs (4 -> 1), night is 3 pcs (1 -> 0 clamped)
+        val medicine = MedicineEntity(
+            id = UUID.randomUUID().toString(),
+            prescriptionId = prescription.id,
+            name = "Azithromycin",
+            type = MedicineType.TABLET,
+            durationDays = 5,
+            foodRule = FoodRule.AFTER,
+            createdAt = nowIso,
+            stockCount = 6,
+            initialStock = 6
+        )
+        val morningSched = DoseScheduleEntity(
+            id = UUID.randomUUID().toString(),
+            medicineId = medicine.id,
+            slot = DoseSlot.MORNING,
+            time = "08:00",
+            doseAmount = 2.0,
+            doseUnit = "pcs"
+        )
+        val afternoonSched = DoseScheduleEntity(
+            id = UUID.randomUUID().toString(),
+            medicineId = medicine.id,
+            slot = DoseSlot.AFTERNOON,
+            time = "15:00",
+            doseAmount = 3.0,
+            doseUnit = "pcs"
+        )
+        val nightSched = DoseScheduleEntity(
+            id = UUID.randomUUID().toString(),
+            medicineId = medicine.id,
+            slot = DoseSlot.NIGHT,
+            time = "22:00",
+            doseAmount = 3.0,
+            doseUnit = "pcs"
+        )
+        prescriptionRepository.saveFullPrescription(
+            prescription = prescription,
+            medicines = listOf(medicine),
+            schedules = listOf(morningSched, afternoonSched, nightSched)
+        )
+
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        org.robolectric.Shadows.shadowOf(app).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+
+        val scheduler = com.mediciplanner.app.notification.ReminderScheduler(context)
+        viewModel = HomeViewModel(prescriptionRepository, reminderRepository, themePreferences, scheduler)
+
+        val initialState = viewModel.uiState.first { it.todayScheduleInfoList.size == 3 }
+        val morningReminderId = initialState.todayScheduleInfoList.first { it.schedule.id == morningSched.id }.reminder!!.id
+        val afternoonReminderId = initialState.todayScheduleInfoList.first { it.schedule.id == afternoonSched.id }.reminder!!.id
+        val nightReminderId = initialState.todayScheduleInfoList.first { it.schedule.id == nightSched.id }.reminder!!.id
+
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val shadowNm = org.robolectric.Shadows.shadowOf(nm)
+        val notifId = "low_stock_${medicine.id}".hashCode()
+
+        // 1. Morning dose (2 pcs): 6 -> 4 (skips 5, still triggers low stock notification!)
+        viewModel.clearToastMessage()
+        viewModel.markAsTaken(morningReminderId)
+        viewModel.toastMessage.first { it != null }
+        val afterMorning = viewModel.uiState.first { it.todayScheduleInfoList.first().medicine.stockCount == 4 }
+        assertEquals(4, afterMorning.todayScheduleInfoList.first().medicine.stockCount)
+        assertEquals(4, prescriptionDao.getMedicineById(medicine.id)?.stockCount)
+        assertNotNull("Expected low stock notification when stock crosses from 6 to 4", shadowNm.getNotification(notifId))
+
+        // 2. Afternoon dose (3 pcs): 4 -> 1 (no duplicate low-stock notification)
+        nm.cancelAll()
+        viewModel.clearToastMessage()
+        viewModel.markAsTaken(afternoonReminderId)
+        viewModel.toastMessage.first { it != null }
+        val afterAfternoon = viewModel.uiState.first { it.todayScheduleInfoList.first().medicine.stockCount == 1 }
+        assertEquals(1, afterAfternoon.todayScheduleInfoList.first().medicine.stockCount)
+        assertNull("Low stock notification must not re-fire when already <= 5", shadowNm.getNotification(notifId))
+
+        // 3. Night dose (3 pcs when stockCount is 1): 1 -> 0 (clamped at 0, shows refill toast)
+        viewModel.clearToastMessage()
+        viewModel.markAsTaken(nightReminderId)
+        val refillToast = viewModel.toastMessage.first { it != null }
+        assertEquals(R.string.msg_stock_finished_refill, refillToast?.messageResId)
+        val afterNight = viewModel.uiState.first { it.todayScheduleInfoList.first().medicine.stockCount == 0 }
+        assertEquals(0, afterNight.todayScheduleInfoList.first().medicine.stockCount)
+        assertEquals(0, prescriptionDao.getMedicineById(medicine.id)?.stockCount)
+        testScheduler.advanceUntilIdle()
+    }
 }
 

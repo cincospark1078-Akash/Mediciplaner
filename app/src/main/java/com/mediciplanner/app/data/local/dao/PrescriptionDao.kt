@@ -141,11 +141,46 @@ interface PrescriptionDao {
     suspend fun getMedicineByScheduleId(scheduleId: String): MedicineEntity?
 
     @Transaction
-    suspend fun decrementStockIfAvailable(medicineId: String): MedicineEntity? {
+    suspend fun decrementStockIfAvailable(medicineId: String, doseAmount: Double = 1.0): MedicineEntity? {
+        return decrementStockWithResult(medicineId, doseAmount)?.medicine
+    }
+
+    @Transaction
+    suspend fun decrementStockWithResult(medicineId: String, doseAmount: Double = 1.0): StockDecrementResult? {
         val med = getMedicineById(medicineId) ?: return null
         if (med.stockCount <= 0) return null
-        val updated = med.copy(stockCount = med.stockCount - 1)
+        val previousStock = med.stockCount
+        val decrementBy = kotlin.math.round(doseAmount).toInt().coerceAtLeast(1)
+        val wasInsufficientStock = previousStock < decrementBy
+        val newStock = (previousStock - decrementBy).coerceAtLeast(0)
+        val updated = med.copy(stockCount = newStock)
         updateMedicine(updated)
-        return updated
+        return StockDecrementResult(
+            medicine = updated,
+            previousStock = previousStock,
+            decrementedBy = decrementBy,
+            crossedLowStockThreshold = previousStock > LOW_STOCK_THRESHOLD && newStock <= LOW_STOCK_THRESHOLD,
+            isOutOfStock = newStock == 0,
+            wasInsufficientStock = wasInsufficientStock
+        )
+    }
+
+    @Transaction
+    suspend fun decrementStockForSchedule(doseScheduleId: String): StockDecrementResult? {
+        val schedule = getDoseScheduleById(doseScheduleId) ?: return null
+        return decrementStockWithResult(schedule.medicineId, schedule.doseAmount)
+    }
+
+    companion object {
+        const val LOW_STOCK_THRESHOLD = 5
     }
 }
+
+data class StockDecrementResult(
+    val medicine: MedicineEntity,
+    val previousStock: Int,
+    val decrementedBy: Int,
+    val crossedLowStockThreshold: Boolean,
+    val isOutOfStock: Boolean,
+    val wasInsufficientStock: Boolean
+)

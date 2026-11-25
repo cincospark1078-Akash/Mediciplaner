@@ -25,6 +25,7 @@ import com.mediciplanner.app.data.util.ReminderIdGenerator
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -991,5 +992,78 @@ class MediciDataLayerTest {
         val ids = reminderDao.getPendingReminderIdsByMedicineId(m1Id)
         assertEquals(setOf("r-m1-past-pending", "r-m1-future-pending"), ids.toSet())
         assertEquals(2, ids.size)
+    }
+
+    @Test
+    fun testDecrementStockForScheduleByDoseAmountAndClampAtZero() = runTest {
+        val presId = UUID.randomUUID().toString()
+        val medId = UUID.randomUUID().toString()
+        val schedTwoPcsId = UUID.randomUUID().toString()
+        val schedThreePcsId = UUID.randomUUID().toString()
+
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = presId,
+                date = "2026-11-24",
+                createdAt = "2026-11-24T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = medId,
+                    prescriptionId = presId,
+                    name = "Napa Extra",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-24T08:00:00",
+                    stockCount = 7,
+                    initialStock = 7
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = schedTwoPcsId,
+                    medicineId = medId,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 2.0,
+                    doseUnit = "pcs"
+                ),
+                DoseScheduleEntity(
+                    id = schedThreePcsId,
+                    medicineId = medId,
+                    slot = DoseSlot.NIGHT,
+                    time = "22:00",
+                    doseAmount = 3.0,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        // 7 - 2 = 5 (crosses low stock threshold)
+        val first = prescriptionRepository.decrementStockForSchedule(schedTwoPcsId)
+        assertNotNull(first)
+        assertEquals(5, first!!.medicine.stockCount)
+        assertEquals(2, first.decrementedBy)
+        assertTrue(first.crossedLowStockThreshold)
+        assertFalse(first.isOutOfStock)
+
+        // 5 - 3 = 2 (already below threshold -> crossedLowStockThreshold = false)
+        val second = prescriptionRepository.decrementStockForSchedule(schedThreePcsId)
+        assertNotNull(second)
+        assertEquals(2, second!!.medicine.stockCount)
+        assertFalse(second.crossedLowStockThreshold)
+        assertFalse(second.isOutOfStock)
+
+        // 2 - 3 -> clamped at 0 (isOutOfStock = true, wasInsufficientStock = true)
+        val third = prescriptionRepository.decrementStockForSchedule(schedThreePcsId)
+        assertNotNull(third)
+        assertEquals(0, third!!.medicine.stockCount)
+        assertTrue(third.isOutOfStock)
+        assertTrue(third.wasInsufficientStock)
+
+        // Further decrement when stockCount == 0 returns null and remains 0
+        val fourth = prescriptionRepository.decrementStockForSchedule(schedTwoPcsId)
+        assertNull(fourth)
+        assertEquals(0, prescriptionDao.getMedicineById(medId)?.stockCount)
     }
 }

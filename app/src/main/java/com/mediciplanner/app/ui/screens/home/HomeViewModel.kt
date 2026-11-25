@@ -501,21 +501,29 @@ class HomeViewModel(
                 )
             }
 
+            var stockOut = false
             if (!wasAlreadyTaken) {
-                val medicineId = targetInfo?.medicine?.id
-                    ?: existing?.doseScheduleId?.let { prescriptionRepository.getMedicineByScheduleId(it)?.id }
-                if (medicineId != null) {
-                    val updatedMedicine = prescriptionRepository.decrementStockIfAvailable(medicineId)
-                    if (updatedMedicine != null && updatedMedicine.stockCount == 5) {
-                        reminderScheduler?.notifyLowStock(updatedMedicine.id, updatedMedicine.name)
+                val stockResult = if (targetInfo != null) {
+                    prescriptionRepository.decrementStockWithResult(
+                        medicineId = targetInfo.medicine.id,
+                        doseAmount = targetInfo.schedule.doseAmount
+                    )
+                } else {
+                    existing?.doseScheduleId?.let { scheduleId ->
+                        prescriptionRepository.decrementStockForSchedule(scheduleId)
                     }
                 }
+                if (stockResult != null && stockResult.crossedLowStockThreshold) {
+                    reminderScheduler?.notifyLowStock(stockResult.medicine.id, stockResult.medicine.name)
+                }
+                stockOut = stockResult?.isOutOfStock == true
             }
 
             // Cancel exact alarm when marked as taken
             reminderScheduler?.cancelReminder(reminderId)
 
             val msgRes = when {
+                stockOut -> R.string.msg_stock_finished_refill
                 isSlotNowComplete -> getSlotCompletedMessageResId(slot!!)
                 wasMissed -> R.string.msg_home_missed_taken
                 else -> R.string.msg_home_dose_taken

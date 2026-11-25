@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.mediciplanner.app.R
 import com.mediciplanner.app.core.util.OcrHelper
 import com.mediciplanner.app.core.util.OcrParser
 import com.mediciplanner.app.core.util.ParsedMedicine
@@ -326,6 +327,9 @@ class PrescriptionCarouselViewModel(
     private val _reviewMedicines = MutableStateFlow<List<ParsedMedicine>>(emptyList())
     val reviewMedicines: StateFlow<List<ParsedMedicine>> = _reviewMedicines.asStateFlow()
 
+    private val _ocrReviewErrorRes = MutableStateFlow<Int?>(null)
+    val ocrReviewErrorRes: StateFlow<Int?> = _ocrReviewErrorRes.asStateFlow()
+
     fun clearToastMessage() {
         _toastMessage.value = null
     }
@@ -582,6 +586,7 @@ class PrescriptionCarouselViewModel(
         }.filter { OcrParser.isValidParsedMedicine(it) }
         _parsedMedicines.value = source
         _reviewMedicines.value = source
+        _ocrReviewErrorRes.value = null
         _showOcrReview.value = true
     }
 
@@ -589,8 +594,9 @@ class PrescriptionCarouselViewModel(
         index: Int,
         name: String,
         dose: String?,
-        foodRule: FoodRule
+        foodRule: FoodRule?
     ) {
+        _ocrReviewErrorRes.value = null
         _reviewMedicines.update { list ->
             if (index !in list.indices) return@update list
             list.toMutableList().apply {
@@ -604,6 +610,7 @@ class PrescriptionCarouselViewModel(
     }
 
     fun removeReviewMedicine(index: Int) {
+        _ocrReviewErrorRes.value = null
         _reviewMedicines.update { list ->
             if (index !in list.indices) return@update list
             list.toMutableList().apply { removeAt(index) }
@@ -611,17 +618,19 @@ class PrescriptionCarouselViewModel(
     }
 
     fun addEmptyReviewMedicine() {
+        _ocrReviewErrorRes.value = null
         _reviewMedicines.update { list ->
             list + ParsedMedicine(
                 name = "",
                 dose = "",
-                foodRule = FoodRule.AFTER,
+                foodRule = null,
                 rawText = ""
             )
         }
     }
 
     fun cancelOcrReview() {
+        _ocrReviewErrorRes.value = null
         _reviewMedicines.value = emptyList()
         _showOcrReview.value = false
     }
@@ -637,10 +646,18 @@ class PrescriptionCarouselViewModel(
             .filter { it.name.isNotBlank() }
 
         if (validMedicines.isEmpty()) {
+            _ocrReviewErrorRes.value = R.string.ocr_review_empty_error
             _toastMessage.value = "কমপক্ষে একটি ওষুধের নাম লিখুন"
             return
         }
 
+        if (validMedicines.any { it.foodRule == null }) {
+            _ocrReviewErrorRes.value = R.string.ocr_review_food_rule_missing_error
+            _toastMessage.value = "অনুগ্রহ করে সব ওষুধের খাবারের নিয়ম নির্বাচন করুন।"
+            return
+        }
+
+        _ocrReviewErrorRes.value = null
         addAllParsedMedicinesToDraft(validMedicines)
         _reviewMedicines.value = emptyList()
         _showOcrReview.value = false

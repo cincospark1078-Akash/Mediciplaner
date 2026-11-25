@@ -83,6 +83,12 @@ class ReminderReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val reminder = MediciDatabase.getDatabase(context).reminderDao().getReminderById(reminderId)
+                if (reminder == null || reminder.status != ReminderStatus.PENDING) {
+                    Log.d("ReminderReceiver", "skipping notification: reminder $reminderId no longer pending")
+                    return@launch
+                }
+
                 val prefs = ThemePreferences(context)
                 val isEnabled = if (type == "medicine") {
                     prefs.medicineRemindersEnabledFlow.first()
@@ -159,12 +165,13 @@ class ReminderReceiver : BroadcastReceiver() {
                 val nowIso = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 db.reminderDao().updateReminderStatus(reminderId, ReminderStatus.TAKEN, nowIso)
                 if (existing != null && existing.status != ReminderStatus.TAKEN) {
-                    val med = db.prescriptionDao().getMedicineByScheduleId(existing.doseScheduleId)
-                    if (med != null) {
-                        val updatedMed = db.prescriptionDao().decrementStockIfAvailable(med.id)
-                        if (updatedMed != null && updatedMed.stockCount == 5) {
-                            NotificationHelper.showLowStockNotification(context, updatedMed.id, updatedMed.name)
-                        }
+                    val stockResult = db.prescriptionDao().decrementStockForSchedule(existing.doseScheduleId)
+                    if (stockResult != null && stockResult.crossedLowStockThreshold) {
+                        NotificationHelper.showLowStockNotification(
+                            context,
+                            stockResult.medicine.id,
+                            stockResult.medicine.name
+                        )
                     }
                 }
                 Log.d("ReminderReceiver", "Marked reminder $reminderId as TAKEN in database")

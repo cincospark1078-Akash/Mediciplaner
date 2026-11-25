@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -41,6 +42,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -74,13 +76,13 @@ class OcrParserAndDraftTest {
         assertEquals("Napa 500 mg", parsed[0].name)
         assertEquals("1+0+1", parsed[0].dose)
         assertEquals("7 days", parsed[0].duration)
-        assertEquals(FoodRule.AFTER, parsed[0].foodRule)
+        assertNull(parsed[0].foodRule)
         assertTrue(parsed[0].rawText.contains("Napa 500 mg"))
 
         assertEquals("Cap. Seclo 20 mg", parsed[1].name)
         assertEquals("1+0+0", parsed[1].dose)
         assertEquals("14 days", parsed[1].duration)
-        assertEquals(FoodRule.AFTER, parsed[1].foodRule)
+        assertNull(parsed[1].foodRule)
         assertTrue(parsed[1].rawText.contains("Cap. Seclo 20 mg"))
     }
 
@@ -510,6 +512,24 @@ class OcrParserAndDraftTest {
             composeTestRule.onNodeWithTag("ocr_review_dose_input_1")
                 .performScrollTo()
                 .performTextReplacement("1+0+1")
+            composeTestRule.waitForIdle()
+
+            // Manual item has no FoodRule yet -> clicking Add All must block with validation error
+            composeTestRule.onNodeWithTag("ocr_review_add_all_button")
+                .performClick()
+            composeTestRule.waitForIdle()
+            assertTrue(viewModel.showOcrReview.value)
+            composeTestRule.onNodeWithTag("ocr_review_validation_error")
+                .assertIsDisplayed()
+                .assertTextContains("অনুগ্রহ করে সব ওষুধের খাবারের নিয়ম নির্বাচন করুন।", substring = true)
+
+            // Select FoodRule for manually added item
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_dropdown_1")
+                .performScrollTo()
+                .performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_option_1_after")
+                .performClick()
             composeTestRule.waitForIdle()
 
             // Click "সব যোগ করুন" -> adds all edited medicines to Draft and navigates to Card 2
@@ -1012,6 +1032,106 @@ class OcrParserAndDraftTest {
 
             composeTestRule.onNodeWithTag("carousel_card_4").assertIsDisplayed()
             composeTestRule.onNodeWithTag("footer_next_medicine_button").assertDoesNotExist()
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test
+    fun ocrParserLeavesFoodRuleNullWhenMissingAndMapsExplicitRulesOnly() {
+        val sampleText = """
+            Tab. Napa 500 mg 1+0+1
+            Cap. Seclo 20 mg 1+0+0 খাওয়ার আগে
+            Tab. Ace Plus 500 mg 1+0+1 খাওয়ার পরে
+            Tab. Metformin 500 mg 1+0+1 খাবারের সাথে
+            Cap. Sergel 20 mg 1+0+0 খালি পেটে
+        """.trimIndent()
+
+        val parsed = OcrParser.parseMedicines(sampleText)
+        assertEquals(5, parsed.size)
+        assertNull("Missing food rule must not default to AFTER", parsed[0].foodRule)
+        assertEquals(FoodRule.BEFORE, parsed[1].foodRule)
+        assertEquals(FoodRule.AFTER, parsed[2].foodRule)
+        assertEquals(FoodRule.WITH, parsed[3].foodRule)
+        assertEquals(FoodRule.EMPTY, parsed[4].foodRule)
+    }
+
+    @Test
+    fun ocrReviewScreenShowsWarningChipPreSelectsNothingAndBlocksSaveUntilRuleSelected() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, MediciDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val fakeOcrHelper = object : OcrHelper(context) {
+                override fun recognizeText(
+                    imageUri: Uri,
+                    onSuccess: (String) -> Unit,
+                    onFailure: (Exception) -> Unit
+                ) {
+                    onSuccess("Tab. Napa 500 mg 1+0+1\nCap. Seclo 20 mg 1+0+0 খালি পেটে")
+                }
+            }
+
+            val viewModel = PrescriptionCarouselViewModel(
+                prescriptionRepository = PrescriptionRepository(db.prescriptionDao()),
+                ocrHelper = fakeOcrHelper
+            )
+            viewModel.processOcrImage(Uri.parse("file:///tmp/rx_missing_food_rule.jpg"))
+
+            composeTestRule.setContent {
+                MediciTheme {
+                    PrescriptionCarouselScreen(
+                        viewModel = viewModel,
+                        onDismiss = {}
+                    )
+                }
+            }
+            composeTestRule.waitForIdle()
+
+            // First medicine has no food rule -> warning chip visible, nothing pre-selected, second has no warning chip
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_warning_chip_0")
+                .assertIsDisplayed()
+                .assertTextContains("নিয়ম নির্বাচন করুন", substring = true)
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_warning_chip_1")
+                .assertDoesNotExist()
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_dropdown_0")
+                .assert(
+                    androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                        androidx.compose.ui.semantics.SemanticsProperties.EditableText,
+                        androidx.compose.ui.text.AnnotatedString("")
+                    )
+                )
+            assertNull(viewModel.reviewMedicines.value[0].foodRule)
+            assertEquals(FoodRule.EMPTY, viewModel.reviewMedicines.value[1].foodRule)
+
+            // Clicking Add All must block and display error banner
+            composeTestRule.onNodeWithTag("ocr_review_add_all_button").performClick()
+            composeTestRule.waitForIdle()
+
+            assertTrue(viewModel.showOcrReview.value)
+            composeTestRule.onNodeWithTag("ocr_review_validation_error")
+                .assertIsDisplayed()
+                .assertTextContains("অনুগ্রহ করে সব ওষুধের খাবারের নিয়ম নির্বাচন করুন।", substring = true)
+
+            // Explicitly choose BEFORE for first medicine -> warning chip & error clear, Add All succeeds
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_dropdown_0")
+                .performScrollTo()
+                .performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_option_0_before")
+                .performClick()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("ocr_review_food_rule_warning_chip_0").assertDoesNotExist()
+
+            composeTestRule.onNodeWithTag("ocr_review_add_all_button").performClick()
+            composeTestRule.waitForIdle()
+
+            assertFalse(viewModel.showOcrReview.value)
+            assertEquals(2, viewModel.draftPrescription.value.medicines.size)
+            assertEquals(FoodRule.BEFORE, viewModel.draftPrescription.value.medicines[0].foodRule)
+            assertEquals(FoodRule.EMPTY, viewModel.draftPrescription.value.medicines[1].foodRule)
         } finally {
             db.close()
         }

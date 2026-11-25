@@ -182,8 +182,15 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val app = application as MediciApplication
+                        val existing = app.reminderRepository.getReminderById(reminderId)
                         val nowIso = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                         app.reminderRepository.markAsTaken(reminderId, nowIso)
+                        if (existing != null && existing.status != com.mediciplanner.app.data.local.entity.ReminderStatus.TAKEN) {
+                            val stockResult = app.prescriptionRepository.decrementStockForSchedule(existing.doseScheduleId)
+                            if (stockResult != null && stockResult.crossedLowStockThreshold) {
+                                app.reminderScheduler.notifyLowStock(stockResult.medicine.id, stockResult.medicine.name)
+                            }
+                        }
                         app.reminderScheduler.cancelReminder(reminderId)
                         Log.d("MainActivity", "Notification body tap: Marked $reminderId as TAKEN in database")
                     } catch (e: Exception) {

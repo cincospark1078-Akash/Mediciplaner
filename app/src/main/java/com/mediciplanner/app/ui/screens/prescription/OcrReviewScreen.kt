@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -66,6 +67,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,17 +85,20 @@ import com.mediciplanner.app.ui.screens.home.toBengaliDigits
 fun OcrReviewScreen(
     imageUri: Uri?,
     medicines: List<ParsedMedicine>,
-    onUpdateMedicine: (index: Int, name: String, dose: String?, foodRule: FoodRule) -> Unit,
+    onUpdateMedicine: (index: Int, name: String, dose: String?, foodRule: FoodRule?) -> Unit,
     onDeleteMedicine: (index: Int) -> Unit,
     onAddNewMedicine: () -> Unit,
     onAddAll: () -> Unit,
     onCancel: () -> Unit,
+    errorResId: Int? = null,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onCancel)
 
     val focusManager = LocalFocusManager.current
     var showFullScreenImage by remember { mutableStateOf(false) }
+    var localErrorResId by remember(medicines) { mutableStateOf<Int?>(null) }
+    val activeErrorResId = errorResId ?: localErrorResId
 
     val visibleMedicines = remember(medicines) {
         medicines.mapIndexedNotNull { originalIndex, item ->
@@ -374,6 +379,44 @@ fun OcrReviewScreen(
             }
         }
 
+        // Validation Error Banner (always visible above bottom actions)
+        if (activeErrorResId != null) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .semantics(mergeDescendants = true) {}
+                    .testTag("ocr_review_validation_error"),
+                shape = RoundedCornerShape(20.dp),
+                color = MediciTheme.colors.warning.copy(alpha = 0.14f),
+                border = BorderStroke(1.dp, MediciTheme.colors.warning)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = stringResource(activeErrorResId),
+                        tint = MediciTheme.colors.warning,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = stringResource(activeErrorResId),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MediciTheme.colors.warning,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
         // Bottom Actions: Cancel & Add All
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -409,7 +452,23 @@ fun OcrReviewScreen(
                 }
 
                 Button(
-                    onClick = onAddAll,
+                    onClick = {
+                        val validNamed = visibleMedicines
+                            .map { it.second }
+                            .filter { it.name.trim().isNotBlank() }
+                        when {
+                            validNamed.isEmpty() -> {
+                                localErrorResId = R.string.ocr_review_empty_error
+                            }
+                            validNamed.any { it.foodRule == null } -> {
+                                localErrorResId = R.string.ocr_review_food_rule_missing_error
+                            }
+                            else -> {
+                                localErrorResId = null
+                                onAddAll()
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 52.dp)
@@ -618,20 +677,63 @@ private fun OcrReviewMedicineCard(
                     .testTag("ocr_review_dose_input_$index")
             )
 
-            // Food Rule Dropdown
+            // Warning Chip if FoodRule is missing
+            if (medicine.foodRule == null) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MediciTheme.colors.warning.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, MediciTheme.colors.warning),
+                    modifier = Modifier
+                        .semantics(mergeDescendants = true) {}
+                        .testTag("ocr_review_food_rule_warning_chip_$index")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = stringResource(R.string.ocr_review_select_rule_chip),
+                            tint = MediciTheme.colors.warning,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.ocr_review_select_rule_chip),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MediciTheme.colors.warning,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+
+            // Food Rule Dropdown (Mandatory, nothing pre-selected when null)
+            val isFoodRuleMissing = medicine.foodRule == null
             ExposedDropdownMenuBox(
                 expanded = foodDropdownExpanded,
                 onExpandedChange = { foodDropdownExpanded = it },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = stringResource(getFoodRuleResId(medicine.foodRule)),
+                    value = medicine.foodRule?.let { stringResource(getFoodRuleResId(it)) } ?: "",
                     onValueChange = {},
                     readOnly = true,
                     singleLine = true,
+                    isError = isFoodRuleMissing,
                     label = {
                         Text(
                             text = stringResource(R.string.field_food_rule),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.ocr_review_select_rule_chip),
+                            color = MediciTheme.colors.warning,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -640,7 +742,11 @@ private fun OcrReviewMedicineCard(
                         Icon(
                             imageVector = Icons.Default.Restaurant,
                             contentDescription = stringResource(R.string.field_food_rule),
-                            tint = MediciTheme.colors.primary
+                            tint = if (isFoodRuleMissing) {
+                                MediciTheme.colors.warning
+                            } else {
+                                MediciTheme.colors.primary
+                            }
                         )
                     },
                     trailingIcon = {
@@ -648,12 +754,14 @@ private fun OcrReviewMedicineCard(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MediciTheme.colors.primary,
-                        unfocusedBorderColor = MediciTheme.colors.outline,
+                        focusedBorderColor = if (isFoodRuleMissing) MediciTheme.colors.warning else MediciTheme.colors.primary,
+                        unfocusedBorderColor = if (isFoodRuleMissing) MediciTheme.colors.warning else MediciTheme.colors.outline,
+                        errorBorderColor = MediciTheme.colors.warning,
+                        errorLabelColor = MediciTheme.colors.warning,
                         focusedTextColor = MediciTheme.colors.textPrimary,
                         unfocusedTextColor = MediciTheme.colors.textPrimary,
-                        focusedLabelColor = MediciTheme.colors.primary,
-                        unfocusedLabelColor = MediciTheme.colors.textSecondary
+                        focusedLabelColor = if (isFoodRuleMissing) MediciTheme.colors.warning else MediciTheme.colors.primary,
+                        unfocusedLabelColor = if (isFoodRuleMissing) MediciTheme.colors.warning else MediciTheme.colors.textSecondary
                     ),
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)

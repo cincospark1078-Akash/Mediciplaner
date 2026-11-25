@@ -108,6 +108,8 @@
     <string name="ocr_review_empty_title">কোনো ওষুধ শনাক্ত হয়নি</string>
     <string name="ocr_review_empty_desc">নিচের \u0027নতুন ওষুধ যোগ করুন\u0027 বাটনে ট্যাপ করে ম্যানুয়ালি ওষুধ যোগ করুন</string>
     <string name="ocr_review_empty_error">কমপক্ষে একটি ওষুধের নাম লিখুন</string>
+    <string name="ocr_review_select_rule_chip">নিয়ম নির্বাচন করুন</string>
+    <string name="ocr_review_food_rule_missing_error">অনুগ্রহ করে সব ওষুধের খাবারের নিয়ম নির্বাচন করুন।</string>
     <string name="ocr_review_medicine_count">%1$sটি ওষুধ</string>
 
     <!-- Card 2: Medicine Details -->
@@ -577,6 +579,7 @@
     <string name="msg_slot_completed_evening">সন্ধ্যার সব ওষুধ সম্পন্ন!</string>
     <string name="msg_slot_completed_night">রাতের সব ওষুধ সম্পন্ন!</string>
     <string name="msg_slot_completed_custom">কাস্টম সময়ের সব ওষুধ সম্পন্ন!</string>
+    <string name="msg_stock_finished_refill">স্টক শেষ, রিফিল করুন</string>
 
     <!-- Follow-up & Track Feedback Messages -->
     <string name="msg_followup_saved_with_dest">ফলো-আপ সেভ হয়েছে। \'ফলো-আপ\' ট্যাবে দেখুন।</string>
