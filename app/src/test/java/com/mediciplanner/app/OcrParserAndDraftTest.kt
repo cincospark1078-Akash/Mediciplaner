@@ -849,23 +849,26 @@ class OcrParserAndDraftTest {
             }
             composeTestRule.waitForIdle()
 
-            // Card 2: Switcher visible with label "ওষুধ নির্বাচন করুন" and both medicines
+            // Card 2: Horizontal MedicineSwitcher chip trail must NOT exist (only the added medicines accordion/dropdown)
             composeTestRule.onNodeWithTag("carousel_card_2").assertIsDisplayed()
-            composeTestRule.onNodeWithTag("medicine_switcher").assertIsDisplayed()
-            composeTestRule.onNodeWithTag("medicine_switcher_label").assertTextEquals("ওষুধ নির্বাচন করুন")
-            composeTestRule.onNodeWithTag("medicine_switcher_chip_0")
-                .assertTextContains("Preclot AS", substring = true)
-                .assertIsSelected()
-            composeTestRule.onNodeWithTag("medicine_switcher_chip_1")
-                .assertTextContains("RTV Eze", substring = true)
-                .assertIsNotSelected()
-
-            // Switch to "RTV Eze" on Card 2 -> loads Name, Strength, and preserves selection
-            composeTestRule.onNodeWithTag("medicine_switcher_chip_1").performClick()
+            composeTestRule.onNodeWithTag("medicine_switcher").assertDoesNotExist()
+            composeTestRule.onNodeWithTag("medicine_switcher_row").assertDoesNotExist()
+            composeTestRule.onNodeWithTag("added_medicines_chip_row").assertDoesNotExist()
+            composeTestRule.onNodeWithTag("added_medicines_accordion_button")
+                .assertIsDisplayed()
+                .assertTextContains("যুক্ত করা ওষুধসমূহ (২)", substring = true)
+                .performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithTag("medicine_switcher_chip_1").assertIsSelected()
-            composeTestRule.onNodeWithTag("medicine_name_input").assertTextContains("RTV Eze", substring = true)
-            composeTestRule.onNodeWithTag("strength_input").assertTextContains("20", substring = true)
+
+            // Select "RTV Eze" from the dropdown/accordion on Card 2 -> loads Name, Strength, and preserves selection
+            composeTestRule.onNodeWithTag("added_medicine_item_1").performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("medicine_name_input")
+                .performScrollTo()
+                .assertTextContains("RTV Eze", substring = true)
+            composeTestRule.onNodeWithTag("strength_input")
+                .performScrollTo()
+                .assertTextContains("20", substring = true)
 
             // Navigate to Card 3 -> Switcher still visible, "RTV Eze" remains selected, schedule loaded
             composeTestRule.onNodeWithTag("footer_next_button").performClick()

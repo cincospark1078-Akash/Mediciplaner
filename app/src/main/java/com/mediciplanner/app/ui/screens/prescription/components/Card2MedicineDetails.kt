@@ -185,14 +185,6 @@ fun Card2MedicineDetails(
                 )
             }
 
-            // Medicine Switcher across added medicines (pinned at top)
-            MedicineSwitcher(
-                addedMedicines = addedMedicines,
-                selectedMedicineIndex = selectedMedicineIndex,
-                currentDraftMedicine = draftMedicine,
-                onSelectMedicine = onSelectMedicine
-            )
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -289,7 +281,12 @@ fun Card2MedicineDetails(
                             ) {
                                 addedMedicines.forEachIndexed { index, med ->
                                     val isSelected = selectedMedicineIndex == index
-                                    val displayName = med.name.ifBlank {
+                                    val rawName = if (isSelected && draftMedicine.name.isNotBlank()) {
+                                        draftMedicine.name
+                                    } else {
+                                        med.name
+                                    }
+                                    val displayName = rawName.ifBlank {
                                         stringResource(
                                             R.string.card2_medicine_default_name,
                                             toBengaliDigits((index + 1).toString())
@@ -708,7 +705,9 @@ fun Card2MedicineDetails(
                                                 FontWeight.Bold
                                             } else {
                                                 FontWeight.Normal
-                                            }
+                                            },
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     },
                                     onClick = {
@@ -728,6 +727,8 @@ fun Card2MedicineDetails(
                     text = stringResource(R.string.strength_helper_text),
                     style = MaterialTheme.typography.bodySmall,
                     color = MediciTheme.tokens.textSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(start = MediciTheme.spacing.small)
                 )
 
