@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mediciplanner.app.R
 import com.mediciplanner.app.core.theme.MediciTheme
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.core.util.SlotActivationHelper
 import com.mediciplanner.app.core.util.formatTime
 import com.mediciplanner.app.data.local.entity.DoseScheduleEntity
@@ -427,7 +428,7 @@ private fun MedicineDetailPageContent(
                     schedules.forEach { sched ->
                         val slotName = stringResource(getDoseSlotResId(sched.slot))
                         val slotEmoji = stringResource(getDoseSlotEmojiResId(sched.slot))
-                        val amountStr = toBengaliDigits(sched.doseAmount.toString().removeSuffix(".0"))
+                        val amountStr = DoseAmountHelper.formatDoseAmount(sched.doseAmount, useBengaliDigits = true)
                         val timeStr = toBengaliDigits(formatTime(sched.time, is24Hour))
                         val unitStr = if (sched.doseUnit.isNotBlank()) sched.doseUnit else stringResource(R.string.unit_ti)
                         val slotFoodRule = sched.foodRuleOverride ?: sched.foodRule

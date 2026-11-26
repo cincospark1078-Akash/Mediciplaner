@@ -1139,4 +1139,160 @@ class OcrParserAndDraftTest {
             db.close()
         }
     }
+
+    @Test
+    fun parseDosePatternMapsAllRequiredPatternsAndFractionsCorrectly() {
+        assertEquals(
+            listOf(
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.MORNING, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NOON, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NIGHT, 1.0)
+            ),
+            OcrParser.parseDosePattern("1+1+1")
+        )
+        assertEquals(
+            listOf(
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.MORNING, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NOON, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NIGHT, 1.0)
+            ),
+            OcrParser.parseDosePattern("১+১+১")
+        )
+        assertEquals(
+            listOf(
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.MORNING, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NOON, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.EVENING, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NIGHT, 1.0)
+            ),
+            OcrParser.parseDosePattern("1+1+1+1")
+        )
+        assertEquals(
+            listOf(
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.MORNING, 1.0),
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NIGHT, 1.0)
+            ),
+            OcrParser.parseDosePattern("1+0+1")
+        )
+        assertEquals(
+            listOf(
+                com.mediciplanner.app.core.util.ParsedDose(DoseSlot.NOON, 1.0)
+            ),
+            OcrParser.parseDosePattern("0+1+0")
+        )
+        val halfThreeTimes = OcrParser.parseDosePattern("1/2+1/2+1/2")
+        assertEquals(3, halfThreeTimes.size)
+        assertEquals(DoseSlot.MORNING, halfThreeTimes[0].slot)
+        assertEquals(0.5, halfThreeTimes[0].doseAmount, 1e-6)
+        assertEquals(DoseSlot.NOON, halfThreeTimes[1].slot)
+        assertEquals(0.5, halfThreeTimes[1].doseAmount, 1e-6)
+        assertEquals(DoseSlot.NIGHT, halfThreeTimes[2].slot)
+        assertEquals(0.5, halfThreeTimes[2].doseAmount, 1e-6)
+    }
+
+    @Test
+    fun parseMedicinesExtractsFractionalAndFourPartPatternsIntoParsedDoses() {
+        val sampleText = """
+            Tab. Napa 500 mg 1+1+1 খাওয়ার পরে
+            Tab. Ace 500 mg ১+১+১+১ খাওয়ার পরে
+            Tab. Monas 10 mg 1+0+1 খাওয়ার পরে
+            Cap. Seclo 20 mg 0+1+0 খাওয়ার আগে
+            Tab. Rivotril 0.5 mg 1/2+1/2+1/2 খাওয়ার পরে
+        """.trimIndent()
+
+        val parsed = OcrParser.parseMedicines(sampleText)
+        assertEquals(5, parsed.size)
+
+        assertEquals("1+1+1", parsed[0].dose)
+        assertEquals(listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.NIGHT), parsed[0].parsedDoses.map { it.slot })
+
+        assertEquals("1+1+1+1", parsed[1].dose)
+        assertEquals(
+            listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.EVENING, DoseSlot.NIGHT),
+            parsed[1].parsedDoses.map { it.slot }
+        )
+
+        assertEquals("1+0+1", parsed[2].dose)
+        assertEquals(listOf(DoseSlot.MORNING, DoseSlot.NIGHT), parsed[2].parsedDoses.map { it.slot })
+
+        assertEquals("0+1+0", parsed[3].dose)
+        assertEquals(listOf(DoseSlot.NOON), parsed[3].parsedDoses.map { it.slot })
+
+        assertEquals("1/2+1/2+1/2", parsed[4].dose)
+        assertEquals(listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.NIGHT), parsed[4].parsedDoses.map { it.slot })
+        assertTrue(parsed[4].parsedDoses.all { kotlin.math.abs(it.doseAmount - 0.5) < 1e-6 })
+    }
+
+    @Test
+    fun ocrReviewScreenDisplaysParsedPatternBreakdownAndAllowsEditingViaInputAndChip() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, MediciDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val fakeOcrHelper = object : OcrHelper(context) {
+                override fun recognizeText(
+                    imageUri: Uri,
+                    onSuccess: (String) -> Unit,
+                    onFailure: (Exception) -> Unit
+                ) {
+                    onSuccess("Tab. Napa 500 mg 1+1+1 খাওয়ার পরে")
+                }
+            }
+
+            val viewModel = PrescriptionCarouselViewModel(
+                prescriptionRepository = PrescriptionRepository(db.prescriptionDao()),
+                ocrHelper = fakeOcrHelper
+            )
+            viewModel.processOcrImage(Uri.parse("file:///tmp/rx_pattern_test.jpg"))
+
+            composeTestRule.setContent {
+                MediciTheme {
+                    PrescriptionCarouselScreen(
+                        viewModel = viewModel,
+                        onDismiss = {}
+                    )
+                }
+            }
+            composeTestRule.waitForIdle()
+
+            // Initial parsed pattern breakdown: "সকাল: ১, দুপুর: ১, রাত: ১"
+            composeTestRule.onNodeWithTag("ocr_review_parsed_doses_0")
+                .performScrollTo()
+                .assertIsDisplayed()
+                .assertTextEquals("সকাল: ১, দুপুর: ১, রাত: ১")
+
+            // Edit via quick chip -> "1+0+1"
+            composeTestRule.onNodeWithTag("ocr_review_dose_chip_0_1_0_1")
+                .performScrollTo()
+                .performClick()
+            composeTestRule.waitForIdle()
+
+            assertEquals("1+0+1", viewModel.reviewMedicines.value[0].dose)
+            composeTestRule.onNodeWithTag("ocr_review_parsed_doses_0")
+                .performScrollTo()
+                .assertTextEquals("সকাল: ১, রাত: ১")
+
+            // Edit via text field -> "1/2+1/2+1/2"
+            composeTestRule.onNodeWithTag("ocr_review_dose_input_0")
+                .performScrollTo()
+                .performTextReplacement("1/2+1/2+1/2")
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("ocr_review_parsed_doses_0")
+                .performScrollTo()
+                .assertTextEquals("সকাল: ১/২, দুপুর: ১/২, রাত: ১/২")
+
+            // Confirm Add All -> verifies schedules carry 0.5 doses to DraftMedicine
+            composeTestRule.onNodeWithTag("ocr_review_add_all_button").performClick()
+            composeTestRule.waitForIdle()
+
+            val draftMed = viewModel.draftPrescription.value.medicines.single()
+            assertEquals(3, draftMed.schedules.size)
+            assertEquals(listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.NIGHT), draftMed.schedules.map { it.slot })
+            assertTrue(draftMed.schedules.all { it.parsedDoseAmount == 0.5 })
+        } finally {
+            db.close()
+        }
+    }
 }

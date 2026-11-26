@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mediciplanner.app.R
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.core.util.OcrHelper
 import com.mediciplanner.app.core.util.OcrParser
 import com.mediciplanner.app.core.util.ParsedMedicine
@@ -22,6 +23,7 @@ import com.mediciplanner.app.data.preferences.ThemePreferences
 import com.mediciplanner.app.data.repository.PrescriptionRepository
 import com.mediciplanner.app.data.repository.ReminderRepository
 import com.mediciplanner.app.notification.ReminderScheduler
+import com.mediciplanner.app.ui.screens.prescription.components.parsePrescriptionDateToLocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.abs
 
 
 enum class PrescriptionSaveType {
@@ -55,7 +58,10 @@ data class DraftSchedule(
     val isExpanded: Boolean = true,
     val foodRule: FoodRule = FoodRule.AFTER,
     val id: String = UUID.randomUUID().toString()
-)
+) {
+    val parsedDoseAmount: Double?
+        get() = DoseAmountHelper.parseDoseAmount(doseAmount)
+}
 
 data class DraftMedicine(
     val name: String = "",
@@ -96,14 +102,14 @@ fun computeTotalMedicineSummary(
 
     val perDayTotal = when (primaryUnit) {
         "mL", "tsp" -> schedules.sumOf { sched ->
-            val amt = sched.doseAmount.toDoubleOrNull() ?: 0.0
+            val amt = DoseAmountHelper.parseDoseAmount(sched.doseAmount) ?: 0.0
             when (sched.doseUnit.trim()) {
                 "tsp" -> amt * 5.0
                 else -> amt
             }
         }
         else -> schedules.sumOf { sched ->
-            sched.doseAmount.toDoubleOrNull() ?: 0.0
+            DoseAmountHelper.parseDoseAmount(sched.doseAmount) ?: 0.0
         }
     }
 
@@ -141,9 +147,13 @@ fun hasPrescriptionChanged(
 ): Boolean {
     val origPres = original.prescription
 
-    // 1. Compare Date (normalize ISO YYYY-MM-DD timestamps without truncating non-ISO dates)
+    // 1. Compare Date (normalize ISO & Bengali dates consistently)
     fun normalizeDate(raw: String?): String {
         val trimmed = raw.orEmpty().trim()
+        val parsed = parsePrescriptionDateToLocalDate(trimmed)
+        if (parsed != null) {
+            return parsed.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        }
         return if (trimmed.length >= 10 && trimmed[4] == '-' && trimmed[7] == '-') {
             trimmed.take(10)
         } else {
@@ -241,8 +251,8 @@ fun hasPrescriptionChanged(
             if (os.time.trim() != ds.time.trim()) return true
 
             val osAmt = os.doseAmount
-            val dsAmt = ds.doseAmount.toDoubleOrNull() ?: 1.0
-            if (osAmt != dsAmt) return true
+            val dsAmt = DoseAmountHelper.parseDoseAmount(ds.doseAmount) ?: 1.0
+            if (abs(osAmt - dsAmt) > 1e-6) return true
 
             if (os.doseUnit.trim() != ds.doseUnit.trim()) return true
             if ((os.foodRuleOverride ?: os.foodRule) != ds.foodRule) return true
@@ -382,7 +392,9 @@ class PrescriptionCarouselViewModel(
 
     fun isCard3Valid(): Boolean {
         val schedules = _draftMedicine.value.schedules
-        return schedules.isNotEmpty() && schedules.all { it.doseAmount.isNotBlank() && it.doseUnit.isNotBlank() }
+        return schedules.isNotEmpty() && schedules.all {
+            DoseAmountHelper.parseDoseAmount(it.doseAmount) != null && it.doseUnit.isNotBlank()
+        }
     }
 
     fun isCard4Valid(): Boolean {
@@ -396,7 +408,9 @@ class PrescriptionCarouselViewModel(
         get() = _draftMedicine.value.name.isNotBlank() &&
                 _draftMedicine.value.type != null &&
                 _draftMedicine.value.schedules.isNotEmpty() &&
-                _draftMedicine.value.schedules.all { it.doseAmount.isNotBlank() && it.doseUnit.isNotBlank() }
+                _draftMedicine.value.schedules.all {
+                    DoseAmountHelper.parseDoseAmount(it.doseAmount) != null && it.doseUnit.isNotBlank()
+                }
 
     fun isCurrentMedicineComplete(): Boolean {
         return isCard2Valid() && isCard3Valid() && isCard4Valid()
@@ -445,6 +459,10 @@ class PrescriptionCarouselViewModel(
                 }
                 if (med.schedules.any { it.doseAmount.isBlank() }) {
                     _errorMessage.value = "অনুগ্রহ করে ডোজের পরিমাণ লিখুন"
+                    return false
+                }
+                if (med.schedules.any { DoseAmountHelper.parseDoseAmount(it.doseAmount) == null }) {
+                    _errorMessage.value = "সঠিক ডোজ পরিমাণ লিখুন (যেমন: 1, 0.5, 1/2)"
                     return false
                 }
                 if (med.schedules.any { it.doseUnit.isBlank() }) {
@@ -603,7 +621,8 @@ class PrescriptionCarouselViewModel(
                 this[index] = this[index].copy(
                     name = name,
                     dose = dose,
-                    foodRule = foodRule
+                    foodRule = foodRule,
+                    parsedDoses = OcrParser.parseDosePattern(dose)
                 )
             }
         }
@@ -624,7 +643,8 @@ class PrescriptionCarouselViewModel(
                 name = "",
                 dose = "",
                 foodRule = null,
-                rawText = ""
+                rawText = "",
+                parsedDoses = emptyList()
             )
         }
     }
@@ -638,9 +658,11 @@ class PrescriptionCarouselViewModel(
     fun confirmAddAllReviewedMedicines(onNavigateToCard2: () -> Unit) {
         val validMedicines = _reviewMedicines.value
             .map {
+                val cleanDose = it.dose?.trim()?.ifBlank { null }
                 it.copy(
                     name = it.name.trim(),
-                    dose = it.dose?.trim()?.ifBlank { null }
+                    dose = cleanDose,
+                    parsedDoses = OcrParser.parseDosePattern(cleanDose)
                 )
             }
             .filter { it.name.isNotBlank() }
@@ -818,7 +840,7 @@ class PrescriptionCarouselViewModel(
 
     fun updateScheduleDoseAmount(slot: DoseSlot, amount: String) {
         _errorMessage.value = null
-        val filtered = amount.filter { it.isDigit() || it == '.' }
+        val filtered = DoseAmountHelper.sanitizeDoseInput(amount)
         _draftMedicine.update { current ->
             val updated = current.schedules.map {
                 if (it.slot == slot) it.copy(doseAmount = filtered) else it
@@ -991,6 +1013,153 @@ class PrescriptionCarouselViewModel(
         _intervalError.value = null
     }
 
+    fun addEmptyDraftMedicine(): Int {
+        val currentMeds = _draftPrescription.value.medicines
+        val updatedList = currentMeds + DraftMedicine()
+        val newIndex = updatedList.lastIndex
+        _draftPrescription.update { it.copy(medicines = updatedList) }
+        _selectedMedicineIndex.value = newIndex
+        _draftMedicine.value = updatedList[newIndex]
+        _errorMessage.value = null
+        _saveError.value = null
+        _durationError.value = null
+        _intervalError.value = null
+        return newIndex
+    }
+
+    private fun updateMedicineAt(index: Int, transform: (DraftMedicine) -> DraftMedicine) {
+        val currentMeds = _draftPrescription.value.medicines
+        if (index !in currentMeds.indices) return
+        val updatedMed = transform(currentMeds[index])
+        val updatedList = currentMeds.toMutableList().apply { this[index] = updatedMed }
+        _draftPrescription.update { it.copy(medicines = updatedList) }
+        if (_selectedMedicineIndex.value == index) {
+            _draftMedicine.value = updatedMed
+        }
+        _errorMessage.value = null
+        _saveError.value = null
+    }
+
+    fun updateMedicineNameAt(index: Int, name: String) {
+        updateMedicineAt(index) { it.copy(name = name) }
+    }
+
+    fun updateMedicineTypeAt(index: Int, newType: MedicineType) {
+        val validDoseUnits = getDoseUnitsForType(newType)
+        updateMedicineAt(index) { current ->
+            val updatedSchedules = current.schedules.map { schedule ->
+                val updatedDoseUnit = if (schedule.doseUnit in validDoseUnits) schedule.doseUnit else ""
+                schedule.copy(doseUnit = updatedDoseUnit)
+            }
+            current.copy(
+                type = newType,
+                strengthUnit = if (current.type == newType) current.strengthUnit else "",
+                schedules = updatedSchedules
+            )
+        }
+    }
+
+    fun updateStrengthAt(index: Int, strength: String) {
+        val filtered = strength.filter { it.isDigit() || it == '.' }
+        updateMedicineAt(index) { it.copy(strength = filtered) }
+    }
+
+    fun updateStrengthUnitAt(index: Int, unit: String) {
+        updateMedicineAt(index) { it.copy(strengthUnit = unit) }
+    }
+
+    fun toggleSlotAt(index: Int, slot: DoseSlot) {
+        updateMedicineAt(index) { current ->
+            val existing = current.schedules.find { it.slot == slot }
+            val updatedSchedules = if (existing != null) {
+                current.schedules.filterNot { it.slot == slot }
+            } else {
+                val availableUnits = getDoseUnitsForType(current.type)
+                val defaultUnit = availableUnits.firstOrNull() ?: ""
+                val defaultTime = when (slot) {
+                    DoseSlot.MORNING -> "08:00"
+                    DoseSlot.NOON -> "13:00"
+                    DoseSlot.AFTERNOON -> "16:00"
+                    DoseSlot.EVENING -> "19:00"
+                    DoseSlot.NIGHT -> "22:00"
+                    DoseSlot.CUSTOM -> "10:00"
+                }
+                current.schedules + DraftSchedule(
+                    slot = slot,
+                    time = defaultTime,
+                    doseAmount = "1",
+                    doseUnit = defaultUnit,
+                    isExpanded = true,
+                    foodRule = FoodRule.AFTER
+                )
+            }
+            current.copy(schedules = updatedSchedules)
+        }
+    }
+
+    fun updateScheduleTimeAt(index: Int, slot: DoseSlot, newTime: String) {
+        updateMedicineAt(index) { current ->
+            current.copy(
+                schedules = current.schedules.map {
+                    if (it.slot == slot) it.copy(time = newTime) else it
+                }
+            )
+        }
+    }
+
+    fun updateScheduleDoseAmountAt(index: Int, slot: DoseSlot, amount: String) {
+        val filtered = DoseAmountHelper.sanitizeDoseInput(amount)
+        updateMedicineAt(index) { current ->
+            current.copy(
+                schedules = current.schedules.map {
+                    if (it.slot == slot) it.copy(doseAmount = filtered) else it
+                }
+            )
+        }
+    }
+
+    fun updateScheduleDoseUnitAt(index: Int, slot: DoseSlot, unit: String) {
+        updateMedicineAt(index) { current ->
+            current.copy(
+                schedules = current.schedules.map {
+                    if (it.slot == slot) it.copy(doseUnit = unit) else it
+                }
+            )
+        }
+    }
+
+    fun updateSlotFoodRuleAt(index: Int, slot: DoseSlot, rule: FoodRule) {
+        updateMedicineAt(index) { current ->
+            current.copy(
+                schedules = current.schedules.map {
+                    if (it.slot == slot) it.copy(foodRule = rule) else it
+                }
+            )
+        }
+    }
+
+    fun updateIntervalDaysAt(index: Int, interval: Int) {
+        val clean = maxOf(1, interval)
+        updateMedicineAt(index) { it.copy(intervalDays = clean) }
+        _intervalError.value = null
+    }
+
+    fun updateDurationDaysAt(index: Int, days: String) {
+        val filtered = days.filter { it.isDigit() }
+        _durationError.value = null
+        _intervalError.value = null
+        updateMedicineAt(index) { it.copy(durationDays = filtered) }
+    }
+
+    fun updateStockCountAt(index: Int, count: Int) {
+        val clean = maxOf(0, count)
+        updateMedicineAt(index) { it.copy(stockCount = clean) }
+    }
+
+    fun updateMedicineNoteAt(index: Int, note: String) {
+        updateMedicineAt(index) { it.copy(note = note) }
+    }
+
     /**
      * LOCKED LOGIC:
      * Do NOT reset the DraftPrescription state when 'Add More' is clicked.
@@ -1071,6 +1240,21 @@ class PrescriptionCarouselViewModel(
                     return@launch
                 }
 
+                if (currentMed.name.isNotBlank() &&
+                    currentMed.schedules.isNotEmpty() &&
+                    currentMed.schedules.any { DoseAmountHelper.parseDoseAmount(it.doseAmount) == null }
+                ) {
+                    val msg = if (currentMed.schedules.any { it.doseAmount.isBlank() }) {
+                        "অনুগ্রহ করে ডোজের পরিমাণ লিখুন"
+                    } else {
+                        "সঠিক ডোজ পরিমাণ লিখুন (যেমন: 1, 0.5, 1/2)"
+                    }
+                    _errorMessage.value = msg
+                    _saveError.value = msg
+                    _isSaving.value = false
+                    return@launch
+                }
+
                 if (allMedicines.isEmpty()) {
                     val msg = if (currentMed.name.isBlank()) {
                         "কমপক্ষে একটি ওষুধ যোগ করা আবশ্যক"
@@ -1083,14 +1267,77 @@ class PrescriptionCarouselViewModel(
                     return@launch
                 }
 
-                // Ensure every saved medicine has a valid duration >= 1
-                if (allMedicines.any { it.durationDays.toIntOrNull() == null || (it.durationDays.toIntOrNull() ?: 0) < 1 }) {
-                    val msg = "অনুগ্রহ করে ওষুধ সেবনের মেয়াদ (কত দিন) লিখুন"
-                    _durationError.value = msg
-                    _errorMessage.value = msg
-                    _saveError.value = msg
-                    _isSaving.value = false
-                    return@launch
+                // Ensure every saved medicine has valid required fields, schedules, duration, and interval
+                for (med in allMedicines) {
+                    if (med.name.isBlank()) {
+                        val msg = "অনুগ্রহ করে ওষুধের নাম লিখুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.type == null) {
+                        val msg = "অনুগ্রহ করে ওষুধের ধরন সিলেক্ট করুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.strength.isNotBlank() &&
+                        getUnitsForType(med.type).isNotEmpty() &&
+                        med.strengthUnit.isBlank()
+                    ) {
+                        val msg = "অনুগ্রহ করে মাত্রার একক সিলেক্ট করুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.schedules.isEmpty()) {
+                        val msg = "অনুগ্রহ করে সেবনের সময় সিলেক্ট করুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.schedules.any { it.doseAmount.isBlank() }) {
+                        val msg = "অনুগ্রহ করে ডোজের পরিমাণ লিখুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.schedules.any { DoseAmountHelper.parseDoseAmount(it.doseAmount) == null }) {
+                        val msg = "সঠিক ডোজ পরিমাণ লিখুন (যেমন: 1, 0.5, 1/2)"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (med.schedules.any { it.doseUnit.isBlank() }) {
+                        val msg = "অনুগ্রহ করে ডোজের একক সিলেক্ট করুন"
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    val parsedDuration = med.durationDays.toIntOrNull()
+                    if (parsedDuration == null || parsedDuration < 1) {
+                        val msg = "অনুগ্রহ করে ওষুধ সেবনের মেয়াদ (কত দিন) লিখুন"
+                        _durationError.value = msg
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
+                    if (maxOf(1, med.intervalDays) > parsedDuration) {
+                        val msg = "মেয়াদের চেয়ে বেশি বিরতি দেয়া যাবে না"
+                        _intervalError.value = msg
+                        _errorMessage.value = msg
+                        _saveError.value = msg
+                        _isSaving.value = false
+                        return@launch
+                    }
                 }
 
                 val activeEditingPresId = _editingPrescription.value?.id
@@ -1214,7 +1461,7 @@ class PrescriptionCarouselViewModel(
                             medicineId = medId,
                             slot = sched.slot,
                             time = sched.time,
-                            doseAmount = sched.doseAmount.toDoubleOrNull() ?: 1.0,
+                            doseAmount = DoseAmountHelper.parseDoseAmount(sched.doseAmount) ?: 1.0,
                             doseUnit = sched.doseUnit.trim(),
                             foodRuleOverride = null,
                             foodRule = sched.foodRule
@@ -1263,11 +1510,7 @@ class PrescriptionCarouselViewModel(
 
                 // 4. INTEGRATION: Generate Reminders for the duration and schedule alarms according to intervalDays
                 if (reminderRepository != null) {
-                    val startDate = try {
-                        LocalDate.parse(dateStr.take(10))
-                    } catch (_: Exception) {
-                        LocalDate.now()
-                    }
+                    val startDate = parsePrescriptionDateToLocalDate(dateStr) ?: LocalDate.now()
 
                     val generatedReminders = mutableListOf<Pair<ReminderEntity, String>>()
                     val schedulesByMedicine = scheduleEntities.groupBy { it.medicineId }
@@ -1354,7 +1597,7 @@ class PrescriptionCarouselViewModel(
                 DraftSchedule(
                     slot = sched.slot,
                     time = sched.time,
-                    doseAmount = sched.doseAmount.toString().removeSuffix(".0"),
+                    doseAmount = DoseAmountHelper.formatDoseAmount(sched.doseAmount, useBengaliDigits = false),
                     doseUnit = sched.doseUnit,
                     isExpanded = true,
                     foodRule = sched.foodRuleOverride ?: sched.foodRule,
@@ -1423,7 +1666,7 @@ class PrescriptionCarouselViewModel(
                 DraftSchedule(
                     slot = sched.slot,
                     time = sched.time,
-                    doseAmount = sched.doseAmount.toString().removeSuffix(".0"),
+                    doseAmount = DoseAmountHelper.formatDoseAmount(sched.doseAmount, useBengaliDigits = false),
                     doseUnit = sched.doseUnit,
                     isExpanded = true,
                     foodRule = sched.foodRuleOverride ?: sched.foodRule,
@@ -1480,7 +1723,7 @@ class PrescriptionCarouselViewModel(
                 DraftSchedule(
                     slot = sched.slot,
                     time = sched.time,
-                    doseAmount = sched.doseAmount.toString().removeSuffix(".0"),
+                    doseAmount = DoseAmountHelper.formatDoseAmount(sched.doseAmount, useBengaliDigits = false),
                     doseUnit = sched.doseUnit,
                     isExpanded = true,
                     foodRule = sched.foodRuleOverride ?: sched.foodRule,
@@ -1519,6 +1762,28 @@ class PrescriptionCarouselViewModel(
         _saveError.value = null
         _durationError.value = null
         _intervalError.value = null
+    }
+
+    fun loadPrescriptionByIdForEditing(prescriptionId: String): kotlinx.coroutines.Job {
+        _saveMode.value = PrescriptionSaveType.EDIT_PRESCRIPTION
+        _editingPrescriptionId.value = prescriptionId
+        _editingMedicineId.value = null
+        _errorMessage.value = null
+        _saveError.value = null
+        _durationError.value = null
+        _intervalError.value = null
+
+        return viewModelScope.launch {
+            val presWithMeds = prescriptionRepository.getPrescriptionWithMedicinesById(prescriptionId)
+                ?: return@launch
+            val targetPresWithMeds = if (presWithMeds.prescription.isLatest) {
+                presWithMeds
+            } else {
+                prescriptionRepository.getLatestPrescriptionWithMedicinesByParentId(presWithMeds.prescription.parentId)
+                    ?: presWithMeds
+            }
+            loadPrescriptionForEditing(targetPresWithMeds)
+        }
     }
 
     fun loadMedicineForEdit(medicineId: String): kotlinx.coroutines.Job {
@@ -1627,7 +1892,7 @@ class PrescriptionCarouselViewModel(
             DraftSchedule(
                 slot = sched.slot,
                 time = sched.time,
-                doseAmount = sched.doseAmount.toString().removeSuffix(".0"),
+                doseAmount = DoseAmountHelper.formatDoseAmount(sched.doseAmount, useBengaliDigits = false),
                 doseUnit = sched.doseUnit,
                 isExpanded = true,
                 foodRule = sched.foodRuleOverride ?: sched.foodRule,

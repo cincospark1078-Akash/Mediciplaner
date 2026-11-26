@@ -79,8 +79,7 @@ fun PrescriptionListScreen(
         )
     )
 
-    var showCarousel by remember { mutableStateOf(false) }
-    var carouselInitialPage by remember { mutableStateOf(0) }
+    var showAddPrescriptionList by remember { mutableStateOf(false) }
     var selectedPrescriptionForDetail by remember { mutableStateOf<PrescriptionWithMedicines?>(null) }
 
     val prescriptionsWithMedicines by repository.allPrescriptionsWithMedicines.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -93,13 +92,12 @@ fun PrescriptionListScreen(
         )
     )
 
-    if (showCarousel) {
-        PrescriptionCarouselScreen(
+    if (showAddPrescriptionList) {
+        AddPrescriptionListScreen(
             viewModel = carouselViewModel,
-            initialPage = carouselInitialPage,
             onDismiss = {
-                showCarousel = false
-                carouselInitialPage = 0
+                showAddPrescriptionList = false
+                carouselViewModel.resetDraft()
             }
         )
     } else {
@@ -116,8 +114,7 @@ fun PrescriptionListScreen(
                 BouncingExtendedFab(
                     onClick = {
                         carouselViewModel.resetDraft()
-                        carouselInitialPage = 0
-                        showCarousel = true
+                        showAddPrescriptionList = true
                     },
                     containerColor = MediciTheme.colors.primary,
                     contentColor = MediciTheme.colors.onPrimary,
@@ -186,7 +183,7 @@ fun PrescriptionListScreen(
                             actionLabel = stringResource(R.string.prescription_fab_new),
                             onActionClick = {
                                 carouselViewModel.resetDraft()
-                                showCarousel = true
+                                showAddPrescriptionList = true
                             },
                             testTag = "prescription_empty_state"
                         )
@@ -224,8 +221,7 @@ fun PrescriptionListScreen(
             onEditClick = { prescriptionToEdit ->
                 selectedPrescriptionForDetail = null
                 carouselViewModel.loadPrescriptionForEditing(prescriptionToEdit)
-                carouselInitialPage = 0
-                showCarousel = true
+                showAddPrescriptionList = true
             },
             onDeleteClick = { prescriptionIdToDelete ->
                 carouselViewModel.deletePrescription(prescriptionIdToDelete) {
@@ -240,14 +236,13 @@ fun PrescriptionListScreen(
             onAddNewMedicineClick = { prescriptionToEdit ->
                 selectedPrescriptionForDetail = null
                 carouselViewModel.loadPrescriptionForAddingMedicine(prescriptionToEdit)
-                carouselInitialPage = 1 // Card 2
-                showCarousel = true
+                carouselViewModel.addEmptyDraftMedicine()
+                showAddPrescriptionList = true
             },
             onEditMedicineClick = { prescriptionToEdit, medicineToEdit ->
                 selectedPrescriptionForDetail = null
                 carouselViewModel.loadPrescriptionForEditingMedicine(prescriptionToEdit, medicineToEdit.id)
-                carouselInitialPage = 1 // Card 2
-                showCarousel = true
+                showAddPrescriptionList = true
             },
             onDeleteMedicineClick = { medicineToDelete ->
                 carouselViewModel.deleteMedicine(medicineToDelete) {

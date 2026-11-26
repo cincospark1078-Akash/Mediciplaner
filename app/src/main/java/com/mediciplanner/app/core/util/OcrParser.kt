@@ -6,16 +6,27 @@ import com.mediciplanner.app.data.local.entity.MedicineType
 import com.mediciplanner.app.ui.screens.prescription.DraftMedicine
 import com.mediciplanner.app.ui.screens.prescription.DraftSchedule
 
+import java.math.BigDecimal
+
+data class ParsedDose(
+    val slot: DoseSlot,
+    val doseAmount: Double
+)
+
 data class ParsedMedicine(
     val name: String,
     val dose: String? = null,
     val foodRule: FoodRule? = null,
     val rawText: String = "",
     val duration: String? = null,
-    val strength: String? = null
+    val strength: String? = null,
+    val parsedDoses: List<ParsedDose> = OcrParser.parseDosePattern(dose)
 )
 
 object OcrParser {
+
+    // Single dose token supporting integers, decimals (0.5, 1.5), and fractions (1/2)
+    private const val DOSE_TOKEN_PATTERN = """\d+(?:\.\d+|/\d+)?"""
 
     // Noise lines starting with "S+", "S +", or "+" (e.g., "S+ fD", "+ SfD")
     private val leadingPlusNoiseRegex = Regex(
@@ -23,23 +34,23 @@ object OcrParser {
         RegexOption.IGNORE_CASE
     )
 
-    // Lines that contain ONLY dosage-like patterns (e.g., "0+0", "0 + 0", "0+0+0", "1+0+1")
+    // Lines that contain ONLY dosage-like patterns (e.g., "0+0", "0 + 0", "0+0+0", "1+0+1", "1/2+1/2+1/2")
     private val dosageOnlyLineRegex = Regex(
-        """^\s*[\d./]+(?:\s*[+\-]\s*[\d./]+)+\s*$"""
+        """^\s*$DOSE_TOKEN_PATTERN(?:\s*[+\-]\s*$DOSE_TOKEN_PATTERN){1,3}\s*$"""
     )
 
-    // All-zero dosage patterns (e.g., "0+0", "0 + 0", "0+0+0")
+    // All-zero dosage patterns (e.g., "0+0", "0 + 0", "0+0+0", "0.0+0.0+0.0")
     private val allZeroDosageRegex = Regex(
-        """^\s*0+(?:\s*[+\-]\s*0+)+\s*$"""
+        """^\s*0+(?:\.0+)?(?:\s*[+\-]\s*0+(?:\.0+)?)+\s*$"""
     )
 
-    // Matches 3-part (and 4-part) dosages including fractions like "0+1+0", "0+1/2+0", "1-0-1"
+    // Matches 3-part and 4-part dosages including fractions/decimals in any position (e.g., "0+1/2+0", "1/2+1/2+1/2", "1+1+1+1", "1-0-1")
     private val threePartDoseRegex = Regex(
-        """(?<![\d./])\d+\s*[+\-]\s*[\d/]+\s*[+\-]\s*\d+(?:\s*[+\-]\s*[\d/]+)?(?![\d./])"""
+        """(?<![\d./])$DOSE_TOKEN_PATTERN(?:\s*[+\-]\s*$DOSE_TOKEN_PATTERN){2,3}(?![\d./])"""
     )
 
     private val doseRegex = Regex(
-        """(?<![\d./])\d+(?:\.\d+)?(?:/\d+)?(?:\s*[+\-]\s*[\d./]+){1,3}(?![\d./])"""
+        """(?<![\d./])$DOSE_TOKEN_PATTERN(?:\s*[+\-]\s*$DOSE_TOKEN_PATTERN){1,3}(?![\d./])"""
     )
 
     private val durationRegex = Regex(
@@ -248,7 +259,8 @@ object OcrParser {
                 foodRule = it.foodRule,
                 rawText = it.rawLines.joinToString("\n"),
                 duration = it.duration,
-                strength = it.strength
+                strength = it.strength,
+                parsedDoses = parseDosePattern(it.dose)
             )
         }
     }
@@ -334,46 +346,49 @@ object OcrParser {
         }
     }
 
+    fun parseDosePattern(dosePattern: String?): List<ParsedDose> {
+        if (dosePattern.isNullOrBlank()) return emptyList()
+        val normalizedPattern = normalizeBengaliDigits(dosePattern).trim()
+        val rawTokens = normalizedPattern.split('+', '-')
+        if (rawTokens.isEmpty() || rawTokens.size > 4) return emptyList()
+
+        val amounts = rawTokens.map { token ->
+            parseDoseFraction(token) ?: return emptyList()
+        }
+        if (amounts.any { !it.isFinite() || it < 0.0 }) return emptyList()
+
+        val slots = when (amounts.size) {
+            1 -> listOf(DoseSlot.MORNING)
+            2 -> listOf(DoseSlot.MORNING, DoseSlot.NIGHT)
+            3 -> listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.NIGHT)
+            4 -> listOf(DoseSlot.MORNING, DoseSlot.NOON, DoseSlot.EVENING, DoseSlot.NIGHT)
+            else -> return emptyList()
+        }
+
+        return amounts.zip(slots).mapNotNull { (amount, slot) ->
+            if (amount <= 0.0) null else ParsedDose(slot = slot, doseAmount = amount)
+        }
+    }
+
     private fun parseSchedules(
         dosePattern: String?,
         doseUnit: String,
         foodRule: FoodRule
     ): List<DraftSchedule> {
-        if (dosePattern.isNullOrBlank()) return emptyList()
-        val normalizedPattern = normalizeBengaliDigits(dosePattern)
-        val parts = normalizedPattern.split('+', '-')
-            .mapNotNull { parseDoseFraction(it) }
-        if (parts.isEmpty()) return emptyList()
+        val parsedDoses = parseDosePattern(dosePattern)
+        if (parsedDoses.isEmpty()) return emptyList()
 
-        val slotMappings: List<Pair<DoseSlot, String>> = when (parts.size) {
-            2 -> listOf(
-                DoseSlot.MORNING to "08:00",
-                DoseSlot.NIGHT to "22:00"
-            )
-            3 -> listOf(
-                DoseSlot.MORNING to "08:00",
-                DoseSlot.NOON to "13:00",
-                DoseSlot.NIGHT to "22:00"
-            )
-            4 -> listOf(
-                DoseSlot.MORNING to "08:00",
-                DoseSlot.NOON to "13:00",
-                DoseSlot.EVENING to "19:00",
-                DoseSlot.NIGHT to "22:00"
-            )
-            else -> listOf(DoseSlot.MORNING to "08:00")
-        }
-
-        return parts.zip(slotMappings).mapNotNull { (amount, slotAndTime) ->
-            if (amount <= 0.0) return@mapNotNull null
-            val formattedAmount = if (amount % 1.0 == 0.0) {
-                amount.toLong().toString()
+        return parsedDoses.map { parsedDose ->
+            val formattedAmount = if (parsedDose.doseAmount % 1.0 == 0.0) {
+                parsedDose.doseAmount.toLong().toString()
             } else {
-                amount.toString()
+                BigDecimal.valueOf(parsedDose.doseAmount)
+                    .stripTrailingZeros()
+                    .toPlainString()
             }
             DraftSchedule(
-                slot = slotAndTime.first,
-                time = slotAndTime.second,
+                slot = parsedDose.slot,
+                time = defaultTimeForSlot(parsedDose.slot),
                 doseAmount = formattedAmount,
                 doseUnit = doseUnit,
                 isExpanded = true,
@@ -382,21 +397,25 @@ object OcrParser {
         }
     }
 
-    private fun parseDoseFraction(token: String): Double? {
-        val trimmed = token.trim()
-        if (trimmed.isEmpty()) return null
-        if (trimmed.contains('/')) {
-            val fractionParts = trimmed.split('/')
-            if (fractionParts.size == 2) {
-                val numerator = fractionParts[0].trim().toDoubleOrNull()
-                val denominator = fractionParts[1].trim().toDoubleOrNull()
-                if (numerator != null && denominator != null && denominator != 0.0) {
-                    return numerator / denominator
-                }
-            }
-            return null
+    private fun defaultTimeForSlot(slot: DoseSlot): String {
+        return when (slot) {
+            DoseSlot.MORNING -> "08:00"
+            DoseSlot.NOON -> "13:00"
+            DoseSlot.AFTERNOON -> "16:00"
+            DoseSlot.EVENING -> "19:00"
+            DoseSlot.NIGHT -> "22:00"
+            DoseSlot.CUSTOM -> "08:00"
         }
-        return trimmed.toDoubleOrNull()
+    }
+
+    private fun parseDoseFraction(token: String): Double? {
+        val trimmed = normalizeBengaliDigits(token).trim()
+        if (trimmed.isEmpty()) return null
+        val zeroCheck = trimmed.toDoubleOrNull()
+        if (zeroCheck != null) {
+            return if (zeroCheck >= 0.0 && zeroCheck.isFinite()) zeroCheck else null
+        }
+        return DoseAmountHelper.parseDoseAmount(trimmed)
     }
 
     private fun parseDurationDays(duration: String?): String {

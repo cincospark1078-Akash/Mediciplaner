@@ -83,6 +83,7 @@
     <string name="field_location">চেম্বার / হাসপাতালের ঠিকানা (ঐচ্ছিক)</string>
     <string name="field_location_placeholder">হাসপাতাল বা ক্লিনিকের নাম</string>
     <string name="error_date_required">তারিখ সিলেক্ট করুন</string>
+    <string name="error_at_least_one_medicine">কমপক্ষে একটি ওষুধ যোগ করা আবশ্যক</string>
     <string name="action_scan_prescription">প্রেস্ক্রিপশন স্ক্যান করুন</string>
     <string name="ocr_scanning_in_progress">ছবি স্ক্যান হচ্ছে...</string>
     <string name="ocr_scanned_text_title">স্ক্যান করা টেক্সট</string>
@@ -111,6 +112,34 @@
     <string name="ocr_review_select_rule_chip">নিয়ম নির্বাচন করুন</string>
     <string name="ocr_review_food_rule_missing_error">অনুগ্রহ করে সব ওষুধের খাবারের নিয়ম নির্বাচন করুন।</string>
     <string name="ocr_review_medicine_count">%1$sটি ওষুধ</string>
+    <string name="ocr_review_dose_slot_entry">%1$s: %2$s</string>
+    <string name="ocr_review_dose_invalid_hint">সঠিক ডোজ প্যাটার্ন লিখুন (যেমন: 1+0+1 বা 1/2+1/2+1/2)</string>
+    <string name="ocr_review_dose_quick_label">দ্রুত ডোজ নির্বাচন:</string>
+    <string name="ocr_dose_pattern_1_0_1">১+০+১</string>
+    <string name="ocr_dose_pattern_1_1_1">১+১+১</string>
+    <string name="ocr_dose_pattern_0_1_0">০+১+০</string>
+    <string name="ocr_dose_pattern_1_0_0">১+০+০</string>
+    <string name="ocr_dose_pattern_1_1_1_1">১+১+১+১</string>
+    <string name="ocr_dose_pattern_half_0_half">১/২+০+১/২</string>
+    <string name="ocr_dose_pattern_half_half_half">১/২+১/২+১/২</string>
+
+    <!-- Add Prescription List View & MedicineFormCard -->
+    <string name="add_prescription_title">প্রেস্ক্রিপশন তৈরি করুন</string>
+    <string name="add_prescription_close_desc">বন্ধ করুন</string>
+    <string name="add_prescription_base_info_header">সাধারণ তথ্য</string>
+    <string name="add_prescription_medicines_header">ওষুধের তালিকা</string>
+    <string name="add_prescription_empty_medicines_hint">নিচের \u0027নতুন ওষুধ যোগ করুন\u0027 বাটনে ট্যাপ করে ওষুধ যোগ করুন</string>
+    <string name="add_prescription_add_medicine">নতুন ওষুধ যোগ করুন</string>
+    <string name="add_prescription_save">সংরক্ষণ করুন</string>
+    <string name="medicine_card_expand_desc">বিস্তারিত দেখুন</string>
+    <string name="medicine_card_collapse_desc">বিস্তারিত লুকান</string>
+    <string name="medicine_card_placeholder_fields">ওষুধের নাম, ধরন ও ডোজের তথ্য পরবর্তী ধাপে যুক্ত হবে</string>
+    <string name="section_header_medicine_name">ওষুধের নাম</string>
+    <string name="section_header_medicine_type">ধরন</string>
+    <string name="section_header_strength">মাত্রা</string>
+    <string name="section_header_schedule_dose">সময়সূচি ও ডোজ</string>
+    <string name="section_header_duration_stock">মেয়াদ ও স্টক</string>
+    <string name="section_header_note">নোট</string>
 
     <!-- Card 2: Medicine Details -->
     <string name="card2_title">ওষুধের বিবরণ</string>
@@ -248,9 +277,10 @@
     <string name="scroll_types_right">ডানে স্ক্রোল করুন</string>
     <string name="medicine_image_preview">ওষুধের ছবির প্রিভিউ</string>
     <string name="action_remove_photo">ছবি সরান</string>
-    <string name="dose_hint_example">যেমন: 1</string>
+    <string name="dose_hint_example">যেমন: 1, 0.5, 1/2</string>
     <string name="field_dose_amount_hint">কতটুকু খাবেন?</string>
     <string name="error_dose_amount_required">ডোজ পরিমাণ প্রদান করুন</string>
+    <string name="error_dose_amount_invalid">সঠিক ডোজ পরিমাণ লিখুন (যেমন: 1, 0.5, 1/2)</string>
     <string name="error_dose_unit_required">ডোজ একক নির্বাচন করুন</string>
     <string name="error_duration_required">মেয়াদ প্রদান করুন</string>
     <string name="swatch_primary">Primary কালার</string>

@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mediciplanner.app.R
 import com.mediciplanner.app.core.theme.MediciTheme
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.ui.components.BouncingOutlinedButton
 import com.mediciplanner.app.ui.screens.home.toBengaliDigits
 import com.mediciplanner.app.ui.screens.prescription.components.Card1BaseInfo
@@ -172,13 +173,17 @@ fun PrescriptionCarouselScreen(
     val isCard1Valid = currentDate != null && currentDate.isNotBlank()
     val isCard2Valid = draftMedicine.name.isNotBlank() && draftMedicine.type != null
     val isCard3Valid = draftMedicine.schedules.isNotEmpty() &&
-            draftMedicine.schedules.all { it.doseAmount.isNotBlank() && it.doseUnit.isNotBlank() }
+            draftMedicine.schedules.all {
+                DoseAmountHelper.parseDoseAmount(it.doseAmount) != null && it.doseUnit.isNotBlank()
+            }
 
     // Dynamic Card 2 / medicine validation state as requested
     val isNextEnabled = draftMedicine.name.isNotBlank() &&
             draftMedicine.type != null &&
             draftMedicine.schedules.isNotEmpty() &&
-            draftMedicine.schedules.all { it.doseAmount.isNotBlank() && it.doseUnit.isNotBlank() }
+            draftMedicine.schedules.all {
+                DoseAmountHelper.parseDoseAmount(it.doseAmount) != null && it.doseUnit.isNotBlank()
+            }
 
     // Next button click handler: validates current card via ViewModel, updates dynamic errorMessage
     val onNextClick: () -> Unit = {

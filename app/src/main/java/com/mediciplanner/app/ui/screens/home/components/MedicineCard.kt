@@ -61,6 +61,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.text.style.TextAlign
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.core.util.SlotActivationHelper
 import com.mediciplanner.app.data.local.entity.DoseScheduleEntity
 import com.mediciplanner.app.data.local.entity.DoseSlot
@@ -136,7 +137,7 @@ fun MedicineCard(
     val foodRuleText = stringResource(foodRuleRes)
     val defaultUnitTi = stringResource(R.string.unit_ti)
     val doseAmountText = if (schedule != null) {
-        val rawAmt = toBengaliDigits(schedule.doseAmount.toString().removeSuffix(".0"))
+        val rawAmt = DoseAmountHelper.formatDoseAmount(schedule.doseAmount, useBengaliDigits = true)
         val unitStr = if (schedule.doseUnit.isNotBlank()) schedule.doseUnit else defaultUnitTi
         "$rawAmt $unitStr"
     } else {

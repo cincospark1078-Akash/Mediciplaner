@@ -16,13 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.mediciplanner.app.core.theme.MediciTheme
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.ui.screens.prescription.DraftMedicine
 import com.mediciplanner.app.ui.screens.prescription.DraftPrescription
 import com.mediciplanner.app.ui.screens.prescription.DraftSchedule
@@ -1182,5 +1185,121 @@ class MediciCarouselTest {
         val secondPres = allLatest.first { it.medicines.any { m -> m.medicine.name == "Ace" } }
         assertEquals(1, secondPres.prescription.versionNumber)
         assertTrue(secondPres.prescription.parentId != originalParentId)
+    }
+
+    @Test
+    fun testDoseAmountHelperFractionAndDecimalParsingAndFormatting() {
+        assertEquals(0.5, DoseAmountHelper.parseDoseAmount("1/2")!!, 1e-6)
+        assertEquals(0.5, DoseAmountHelper.parseDoseAmount("0.5")!!, 1e-6)
+        assertEquals(1.5, DoseAmountHelper.parseDoseAmount("1.5")!!, 1e-6)
+        assertEquals(1.5, DoseAmountHelper.parseDoseAmount("1 1/2")!!, 1e-6)
+        assertEquals(0.5, DoseAmountHelper.parseDoseAmount("১/২")!!, 1e-6)
+        assertEquals(0.25, DoseAmountHelper.parseDoseAmount("1/4")!!, 1e-6)
+        assertEquals(0.75, DoseAmountHelper.parseDoseAmount("3/4")!!, 1e-6)
+
+        assertNull(DoseAmountHelper.parseDoseAmount(""))
+        assertNull(DoseAmountHelper.parseDoseAmount("1/"))
+        assertNull(DoseAmountHelper.parseDoseAmount("1/0"))
+        assertNull(DoseAmountHelper.parseDoseAmount("0"))
+
+        assertEquals("1/2", DoseAmountHelper.formatDoseAmount(0.5, useBengaliDigits = false))
+        assertEquals("১/২", DoseAmountHelper.formatDoseAmount(0.5, useBengaliDigits = true))
+        assertEquals("1.5", DoseAmountHelper.formatDoseAmount(1.5, useBengaliDigits = false))
+        assertEquals("১.৫", DoseAmountHelper.formatDoseAmount(1.5, useBengaliDigits = true))
+        assertEquals("1", DoseAmountHelper.formatDoseAmount(1.0, useBengaliDigits = false))
+    }
+
+    @Test
+    @Config(sdk = [36], qualifiers = "w411dp-h891dp")
+    fun testFractionalDoseInputPersistsDoubleAndDisplaysFractionInCard() = runTest {
+        viewModel.resetDraft()
+        viewModel.updateDate("2026-11-25")
+        viewModel.updateMedicineName("Napa")
+        viewModel.updateMedicineType(MedicineType.TABLET)
+        viewModel.toggleSlot(DoseSlot.MORNING)
+        viewModel.updateScheduleDoseUnit(DoseSlot.MORNING, "টি")
+        viewModel.updateDurationDays("6")
+
+        composeTestRule.setContent {
+            MediciTheme {
+                val draftMedicine by viewModel.draftMedicine.collectAsState()
+                Card3ScheduleDose(
+                    draftMedicine = draftMedicine,
+                    onToggleSlot = { viewModel.toggleSlot(it) },
+                    onToggleExpanded = { viewModel.toggleScheduleExpanded(it) },
+                    onTimeChanged = { slot, time -> viewModel.updateScheduleTime(slot, time) },
+                    onAmountChanged = { slot, amt -> viewModel.updateScheduleDoseAmount(slot, amt) },
+                    onUnitChanged = { slot, unit -> viewModel.updateScheduleDoseUnit(slot, unit) },
+                    onSlotFoodRuleChanged = { slotId, rule -> viewModel.updateSlotFoodRule(slotId, rule) }
+                )
+            }
+        }
+
+        // Replace default "1" with "1/2"
+        composeTestRule.onNodeWithTag("dose_amount_input_morning").performScrollTo().performTextClearance()
+        composeTestRule.onNodeWithTag("dose_amount_input_morning").performTextInput("1/2")
+        composeTestRule.waitForIdle()
+
+        val morningDraft = viewModel.draftMedicine.value.schedules.first { it.slot == DoseSlot.MORNING }
+        assertEquals("1/2", morningDraft.doseAmount)
+        assertEquals(0.5, morningDraft.parsedDoseAmount!!, 1e-6)
+        assertTrue(viewModel.isCard3Valid())
+        assertTrue(viewModel.validateCard(2))
+        assertEquals(
+            "মোট ওষুধ লাগবে: 3 টি",
+            viewModel.calculateTotalMedicine(6, 1, listOf(morningDraft))
+        )
+
+        var saved = false
+        viewModel.reviewAndSave(onSuccess = { saved = true }).join()
+        assertTrue("Expected fractional dose prescription to save", saved)
+
+        val persisted = prescriptionDao.getAllPrescriptionsWithMedicines().first().first()
+        val persistedSched = persisted.medicines.first().doseSchedules.first().doseSchedule
+        assertEquals(0.5, persistedSched.doseAmount, 1e-6)
+
+        // Reloading for edit formats 0.5 back to "1/2"
+        viewModel.loadPrescriptionForEditing(persisted)
+        assertEquals("1/2", viewModel.draftMedicine.value.schedules.first().doseAmount)
+    }
+
+    @Test
+    @Config(sdk = [36], qualifiers = "w411dp-h891dp")
+    fun testMedicineCardDisplaysFractionForHalfDose() {
+        val med = com.mediciplanner.app.data.local.entity.MedicineEntity(
+            id = "med-half",
+            prescriptionId = "pres-half",
+            name = "Napa",
+            type = MedicineType.TABLET,
+            foodRule = FoodRule.AFTER,
+            createdAt = "2026-11-25T08:00:00"
+        )
+        val sched = com.mediciplanner.app.data.local.entity.DoseScheduleEntity(
+            id = "sched-half",
+            medicineId = med.id,
+            slot = DoseSlot.MORNING,
+            time = "08:00",
+            doseAmount = 0.5,
+            doseUnit = "টি"
+        )
+
+        composeTestRule.setContent {
+            MediciTheme {
+                com.mediciplanner.app.ui.screens.home.components.MedicineCard(
+                    medicine = med,
+                    schedule = sched,
+                    isTaken = false,
+                    isReadOnly = true
+                )
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.mainClock.advanceTimeBy(500)
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("medicine_card_dose_chip_med-half", useUnmergedTree = true)
+            .assertIsDisplayed()
+            .assertTextContains("১/২ টি")
     }
 }

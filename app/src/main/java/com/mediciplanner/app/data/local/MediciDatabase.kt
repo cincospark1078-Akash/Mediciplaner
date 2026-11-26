@@ -26,7 +26,7 @@ import com.mediciplanner.app.data.local.entity.ReminderEntity
         ReminderEntity::class,
         FollowUpEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class, ListConverter::class)
@@ -116,6 +116,36 @@ abstract class MediciDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS dose_schedules_new (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        medicineId TEXT NOT NULL,
+                        slot TEXT NOT NULL,
+                        time TEXT NOT NULL,
+                        doseAmount REAL NOT NULL,
+                        doseUnit TEXT NOT NULL,
+                        foodRuleOverride TEXT,
+                        foodRule TEXT NOT NULL DEFAULT 'AFTER',
+                        FOREIGN KEY(medicineId) REFERENCES medicines(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO dose_schedules_new (id, medicineId, slot, time, doseAmount, doseUnit, foodRuleOverride, foodRule)
+                    SELECT id, medicineId, slot, time, CAST(doseAmount AS REAL), doseUnit, foodRuleOverride, foodRule
+                    FROM dose_schedules
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE dose_schedules")
+                db.execSQL("ALTER TABLE dose_schedules_new RENAME TO dose_schedules")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_dose_schedules_medicineId ON dose_schedules(medicineId)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: MediciDatabase? = null
 
@@ -145,7 +175,8 @@ abstract class MediciDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8,
                     MIGRATION_8_9,
-                    MIGRATION_9_10
+                    MIGRATION_9_10,
+                    MIGRATION_10_11
                 )
                 .build()
                 INSTANCE = instance

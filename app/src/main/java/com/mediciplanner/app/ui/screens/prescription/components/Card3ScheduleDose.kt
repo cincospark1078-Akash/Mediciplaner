@@ -66,6 +66,7 @@ import com.mediciplanner.app.core.theme.SlotEveningColor
 import com.mediciplanner.app.core.theme.SlotMorningColor
 import com.mediciplanner.app.core.theme.SlotNightColor
 import com.mediciplanner.app.core.theme.SlotNoonColor
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.core.util.UnitHelper
 import com.mediciplanner.app.core.util.formatTime
 import com.mediciplanner.app.data.local.entity.DoseSlot
@@ -112,7 +113,9 @@ fun Card3ScheduleDose(
     val availableUnits = UnitHelper.getDoseUnitsForType(draftMedicine.type)
 
     val isSlotSelectionEmpty = draftMedicine.schedules.isEmpty()
-    val hasIncompleteSchedule = draftMedicine.schedules.any { it.doseAmount.isBlank() || it.doseUnit.isBlank() }
+    val hasIncompleteSchedule = draftMedicine.schedules.any {
+        DoseAmountHelper.parseDoseAmount(it.doseAmount) == null || it.doseUnit.isBlank()
+    }
 
     Card(
         modifier = modifier

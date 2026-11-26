@@ -10,6 +10,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +47,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.mediciplanner.app.R
 import com.mediciplanner.app.core.theme.MediciTheme
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.core.util.OcrParser
 import com.mediciplanner.app.core.util.ParsedMedicine
 import com.mediciplanner.app.data.local.entity.FoodRule
@@ -498,7 +503,7 @@ fun OcrReviewScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun OcrReviewMedicineCard(
     index: Int,
@@ -509,6 +514,21 @@ private fun OcrReviewMedicineCard(
     onDelete: () -> Unit
 ) {
     var foodDropdownExpanded by remember { mutableStateOf(false) }
+
+    val parsedDoses = remember(medicine.dose, medicine.parsedDoses) {
+        if (medicine.dose.isNullOrBlank()) {
+            emptyList()
+        } else {
+            OcrParser.parseDosePattern(medicine.dose).ifEmpty { medicine.parsedDoses }
+        }
+    }
+
+    val normalizedCurrentDose = remember(medicine.dose) {
+        DoseAmountHelper.normalizeDigits(medicine.dose.orEmpty())
+            .replace(Regex("""\s*([+\-])\s*""")) { it.groupValues[1] }
+            .replace('-', '+')
+            .trim()
+    }
 
     Card(
         modifier = Modifier
@@ -677,6 +697,135 @@ private fun OcrReviewMedicineCard(
                     .testTag("ocr_review_dose_input_$index")
             )
 
+            // Parsed Dose Pattern Preview (e.g., "সকাল: ১, দুপুর: ১, রাত: ১")
+            if (parsedDoses.isNotEmpty()) {
+                val doseBreakdownText = parsedDoses
+                    .map { parsedDose ->
+                        val slotLabel = stringResource(getDoseSlotResId(parsedDose.slot))
+                        val amountLabel = DoseAmountHelper.formatDoseAmount(
+                            amount = parsedDose.doseAmount,
+                            useBengaliDigits = true
+                        )
+                        stringResource(R.string.ocr_review_dose_slot_entry, slotLabel, amountLabel)
+                    }
+                    .joinToString(separator = ", ")
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MediciTheme.colors.primaryContainer.copy(alpha = 0.55f),
+                    border = BorderStroke(1.dp, MediciTheme.colors.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MediciTheme.colors.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = doseBreakdownText,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MediciTheme.colors.primary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("ocr_review_parsed_doses_$index")
+                        )
+                    }
+                }
+            } else if (!medicine.dose.isNullOrBlank()) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MediciTheme.colors.warning.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, MediciTheme.colors.warning),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = stringResource(R.string.ocr_review_dose_invalid_hint),
+                            tint = MediciTheme.colors.warning,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.ocr_review_dose_invalid_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MediciTheme.colors.warning,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("ocr_review_dose_invalid_$index")
+                        )
+                    }
+                }
+            }
+
+            // Quick-select Editable Dose Pattern Chips
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.ocr_review_dose_quick_label),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MediciTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    OCR_QUICK_DOSE_PATTERNS.forEach { preset ->
+                        val isSelected = normalizedCurrentDose == preset.canonical
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onDoseChanged(preset.canonical) },
+                            label = {
+                                Text(
+                                    text = stringResource(preset.labelResId),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MediciTheme.colors.primaryContainer,
+                                selectedLabelColor = MediciTheme.colors.primary,
+                                containerColor = MediciTheme.colors.surface,
+                                labelColor = MediciTheme.colors.textSecondary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = MediciTheme.colors.outlineVariant,
+                                selectedBorderColor = MediciTheme.colors.primary
+                            ),
+                            modifier = Modifier.testTag("ocr_review_dose_chip_${index}_${preset.tagSuffix}")
+                        )
+                    }
+                }
+            }
+
             // Warning Chip if FoodRule is missing
             if (medicine.foodRule == null) {
                 Surface(
@@ -804,3 +953,19 @@ private fun OcrReviewMedicineCard(
         }
     }
 }
+
+private data class DosePatternPreset(
+    val canonical: String,
+    val labelResId: Int,
+    val tagSuffix: String
+)
+
+private val OCR_QUICK_DOSE_PATTERNS = listOf(
+    DosePatternPreset("1+0+1", R.string.ocr_dose_pattern_1_0_1, "1_0_1"),
+    DosePatternPreset("1+1+1", R.string.ocr_dose_pattern_1_1_1, "1_1_1"),
+    DosePatternPreset("0+1+0", R.string.ocr_dose_pattern_0_1_0, "0_1_0"),
+    DosePatternPreset("1+0+0", R.string.ocr_dose_pattern_1_0_0, "1_0_0"),
+    DosePatternPreset("1+1+1+1", R.string.ocr_dose_pattern_1_1_1_1, "1_1_1_1"),
+    DosePatternPreset("1/2+0+1/2", R.string.ocr_dose_pattern_half_0_half, "half_0_half"),
+    DosePatternPreset("1/2+1/2+1/2", R.string.ocr_dose_pattern_half_half_half, "half_half_half")
+)

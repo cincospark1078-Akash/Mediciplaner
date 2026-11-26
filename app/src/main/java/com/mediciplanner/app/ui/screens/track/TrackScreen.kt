@@ -739,7 +739,10 @@ private fun HistoryDoseCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     val timeStr = toBengaliDigits(formatTime(doseItem.schedule.time, is24Hour))
-                    val amountStr = toBengaliDigits(doseItem.schedule.doseAmount.toString().removeSuffix(".0"))
+                    val amountStr = com.mediciplanner.app.core.util.DoseAmountHelper.formatDoseAmount(
+                        doseItem.schedule.doseAmount,
+                        useBengaliDigits = true
+                    )
                     val doseUnit = if (doseItem.schedule.doseUnit.isNotBlank()) doseItem.schedule.doseUnit else stringResource(R.string.unit_ti)
 
                     Text(
@@ -1069,7 +1072,10 @@ private fun MissedItemRow(
                     overflow = TextOverflow.Ellipsis
                 )
                 val timeStr = toBengaliDigits(formatTime(item.schedule.time, is24Hour))
-                val amountStr = toBengaliDigits(item.schedule.doseAmount.toString().removeSuffix(".0"))
+                val amountStr = com.mediciplanner.app.core.util.DoseAmountHelper.formatDoseAmount(
+                    item.schedule.doseAmount,
+                    useBengaliDigits = true
+                )
                 val doseUnit = if (item.schedule.doseUnit.isNotBlank()) item.schedule.doseUnit else stringResource(R.string.unit_ti)
                 Text(
                     text = "$timeStr · $amountStr $doseUnit",

@@ -1066,4 +1066,104 @@ class MediciDataLayerTest {
         assertNull(fourth)
         assertEquals(0, prescriptionDao.getMedicineById(medId)?.stockCount)
     }
+
+    @Test
+    fun testDoseScheduleMigration10To11AndFractionalDoublePersistence() = runTest {
+        val v10Db = androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory().create(
+            androidx.sqlite.db.SupportSQLiteOpenHelper.Configuration.builder(
+                ApplicationProvider.getApplicationContext()
+            )
+                .callback(object : androidx.sqlite.db.SupportSQLiteOpenHelper.Callback(10) {
+                    override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        db.execSQL("CREATE TABLE IF NOT EXISTS prescriptions (id TEXT PRIMARY KEY NOT NULL)")
+                        db.execSQL("CREATE TABLE IF NOT EXISTS medicines (id TEXT PRIMARY KEY NOT NULL, prescriptionId TEXT NOT NULL)")
+                        db.execSQL(
+                            """
+                            CREATE TABLE IF NOT EXISTS dose_schedules (
+                                id TEXT PRIMARY KEY NOT NULL,
+                                medicineId TEXT NOT NULL,
+                                slot TEXT NOT NULL,
+                                time TEXT NOT NULL,
+                                doseAmount INTEGER NOT NULL,
+                                doseUnit TEXT NOT NULL,
+                                foodRuleOverride TEXT,
+                                foodRule TEXT NOT NULL DEFAULT 'AFTER',
+                                FOREIGN KEY(medicineId) REFERENCES medicines(id) ON DELETE CASCADE
+                            )
+                            """.trimIndent()
+                        )
+                    }
+
+                    override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+                })
+                .build()
+        ).writableDatabase
+
+        v10Db.execSQL("INSERT INTO prescriptions (id) VALUES ('p10')")
+        v10Db.execSQL("INSERT INTO medicines (id, prescriptionId) VALUES ('m10', 'p10')")
+        v10Db.execSQL("INSERT INTO dose_schedules (id, medicineId, slot, time, doseAmount, doseUnit, foodRuleOverride, foodRule) VALUES ('s10', 'm10', 'MORNING', '08:00', 2, 'pcs', NULL, 'AFTER')")
+
+        MediciDatabase.MIGRATION_10_11.migrate(v10Db)
+
+        // Verify column type is REAL and existing integer row migrated to 2.0
+        v10Db.query("PRAGMA table_info(dose_schedules)").use { c ->
+            var doseAmountType = ""
+            while (c.moveToNext()) {
+                if (c.getString(c.getColumnIndexOrThrow("name")) == "doseAmount") {
+                    doseAmountType = c.getString(c.getColumnIndexOrThrow("type"))
+                    break
+                }
+            }
+            assertEquals("REAL", doseAmountType)
+        }
+        v10Db.query("SELECT doseAmount FROM dose_schedules WHERE id = 's10'").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals(2.0, c.getDouble(0), 1e-6)
+        }
+        v10Db.close()
+
+        // Verify Room v11 DB stores and retrieves fractional Double values (0.5, 1.5)
+        val presId = UUID.randomUUID().toString()
+        val medId = UUID.randomUUID().toString()
+        val halfSchedId = UUID.randomUUID().toString()
+        val oneHalfSchedId = UUID.randomUUID().toString()
+        prescriptionRepository.saveFullPrescription(
+            prescription = PrescriptionEntity(
+                id = presId,
+                date = "2026-11-25",
+                createdAt = "2026-11-25T08:00:00"
+            ),
+            medicines = listOf(
+                MedicineEntity(
+                    id = medId,
+                    prescriptionId = presId,
+                    name = "Napa",
+                    type = MedicineType.TABLET,
+                    foodRule = FoodRule.AFTER,
+                    createdAt = "2026-11-25T08:00:00"
+                )
+            ),
+            schedules = listOf(
+                DoseScheduleEntity(
+                    id = halfSchedId,
+                    medicineId = medId,
+                    slot = DoseSlot.MORNING,
+                    time = "08:00",
+                    doseAmount = 0.5,
+                    doseUnit = "pcs"
+                ),
+                DoseScheduleEntity(
+                    id = oneHalfSchedId,
+                    medicineId = medId,
+                    slot = DoseSlot.NIGHT,
+                    time = "22:00",
+                    doseAmount = 1.5,
+                    doseUnit = "pcs"
+                )
+            )
+        )
+
+        assertEquals(0.5, prescriptionDao.getDoseScheduleById(halfSchedId)!!.doseAmount, 1e-6)
+        assertEquals(1.5, prescriptionDao.getDoseScheduleById(oneHalfSchedId)!!.doseAmount, 1e-6)
+    }
 }

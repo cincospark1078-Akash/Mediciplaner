@@ -73,7 +73,7 @@ import com.mediciplanner.app.ui.components.AboutAppDialog
 import com.mediciplanner.app.ui.components.BouncingButton
 import com.mediciplanner.app.ui.components.FrostedCard
 import com.mediciplanner.app.ui.screens.home.components.GreetingHeader
-import com.mediciplanner.app.ui.screens.prescription.PrescriptionCarouselScreen
+import com.mediciplanner.app.ui.screens.prescription.AddPrescriptionListScreen
 import com.mediciplanner.app.ui.screens.prescription.PrescriptionCarouselViewModel
 import com.mediciplanner.app.ui.screens.prescription.PrescriptionCarouselViewModelFactory
 import com.mediciplanner.app.ui.screens.home.components.MedicineCard
@@ -139,7 +139,7 @@ fun HomeScreen(
     var selectedScheduleForDetail by remember { mutableStateOf<DoseScheduleEntity?>(null) }
     var editingMedicineId by remember { mutableStateOf<String?>(null) }
     var editingPrescriptionId by remember { mutableStateOf<String?>(null) }
-    var showNewPrescriptionCarousel by remember { mutableStateOf(false) }
+    var showNewPrescriptionList by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var expandedSlots by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
 
@@ -284,7 +284,7 @@ fun HomeScreen(
                                         BouncingButton(
                                             onClick = {
                                                 carouselViewModel.resetDraft()
-                                                showNewPrescriptionCarousel = true
+                                                showNewPrescriptionList = true
                                             },
                                             shape = RoundedCornerShape(20.dp),
                                             scaleDown = 0.96f,
@@ -638,12 +638,11 @@ fun HomeScreen(
                 )
             }
 
-            // Edit Prescription Carousel
+            // Edit Prescription List Screen
             val currentEditingMedId = editingMedicineId
             if (currentEditingMedId != null) {
-                PrescriptionCarouselScreen(
+                AddPrescriptionListScreen(
                     viewModel = carouselViewModel,
-                    initialPage = 1,
                     medicineId = currentEditingMedId,
                     prescriptionId = editingPrescriptionId,
                     onDismiss = {
@@ -654,13 +653,12 @@ fun HomeScreen(
                 )
             }
 
-            // New Prescription Carousel (from State A CTA)
-            if (showNewPrescriptionCarousel) {
-                PrescriptionCarouselScreen(
+            // New Prescription List Screen (from State A CTA)
+            if (showNewPrescriptionList) {
+                AddPrescriptionListScreen(
                     viewModel = carouselViewModel,
-                    initialPage = 0,
                     onDismiss = {
-                        showNewPrescriptionCarousel = false
+                        showNewPrescriptionList = false
                         carouselViewModel.resetDraft()
                     }
                 )

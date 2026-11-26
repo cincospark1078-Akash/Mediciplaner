@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mediciplanner.app.R
 import com.mediciplanner.app.core.theme.MediciTheme
+import com.mediciplanner.app.core.util.DoseAmountHelper
 import com.mediciplanner.app.ui.screens.prescription.DraftSchedule
 
 /**
@@ -53,6 +54,8 @@ fun DoseInputRow(
 ) {
     var unitDropdownExpanded by remember { mutableStateOf(false) }
     val isAmountEmpty = schedule.doseAmount.isBlank()
+    val isAmountInvalid = !isAmountEmpty && DoseAmountHelper.parseDoseAmount(schedule.doseAmount) == null
+    val hasAmountError = isAmountEmpty || isAmountInvalid
     val isUnitEmpty = schedule.doseUnit.isBlank()
     val slotTag = schedule.slot.name.lowercase()
 
@@ -85,14 +88,14 @@ fun DoseInputRow(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                isError = showError && isAmountEmpty,
+                isError = showError && hasAmountError,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("dose_amount_input_$slotTag"),
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MediciTheme.tokens.primary,
-                    unfocusedBorderColor = if (showError && isAmountEmpty) {
+                    unfocusedBorderColor = if (showError && hasAmountError) {
                         MediciTheme.tokens.warning
                     } else {
                         MediciTheme.tokens.outline
@@ -184,7 +187,9 @@ fun DoseInputRow(
                                         FontWeight.Bold
                                     } else {
                                         FontWeight.Normal
-                                    }
+                                    },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             },
                             onClick = {
@@ -204,16 +209,27 @@ fun DoseInputRow(
             text = stringResource(R.string.field_dose_amount_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MediciTheme.tokens.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = MediciTheme.spacing.extraSmall)
         )
 
-        // Error message if amount is empty
+        // Error message if amount is empty or invalid
         if (showError && isAmountEmpty) {
             Text(
                 text = stringResource(R.string.error_dose_amount_required),
                 style = MaterialTheme.typography.labelSmall,
                 color = MediciTheme.tokens.warning,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = MediciTheme.spacing.extraSmall)
+            )
+        } else if (showError && isAmountInvalid) {
+            Text(
+                text = stringResource(R.string.error_dose_amount_invalid),
+                style = MaterialTheme.typography.labelSmall,
+                color = MediciTheme.tokens.warning,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = MediciTheme.spacing.extraSmall)
             )
