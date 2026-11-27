@@ -95,7 +95,8 @@
     <string name="ocr_no_medicines_detected">টেক্সট থেকে কোনো ওষুধ শনাক্ত করা যায়নি</string>
     <string name="action_add_prescription_unified">প্রেস্ক্রিপশন যোগ করুন</string>
     <string name="ocr_scan_with_camera">ক্যামেরা দিয়ে স্ক্যান করুন</string>
-    <string name="ocr_upload_from_gallery">গ্যালারি থেকে আপলোড করুন</string>
+    <string name="ocr_upload_from_gallery">ফাইল থেকে আপলোড করুন</string>
+    <string name="ocr_upload_drive_helper">Google Drive থেকে আপলোড করতে, ডিভাইসে Google Drive অ্যাপ ইনস্টল ও লগইন করা থাকতে হবে। না দেখা গেলে ফাইলটি Downloads-এ সেভ করে নির্বাচন করুন।</string>
     <string name="ocr_review_title">ওষুধগুলো যাচাই করুন</string>
     <string name="ocr_review_subtitle">স্ক্যান করা ওষুধের নাম, ডোজ ও খাবারের নিয়ম প্রয়োজনমতো সংশোধন করুন</string>
     <string name="ocr_review_original_image">মূল প্রেসক্রিপশনের ছবি (দেখতে ট্যাপ করুন)</string>

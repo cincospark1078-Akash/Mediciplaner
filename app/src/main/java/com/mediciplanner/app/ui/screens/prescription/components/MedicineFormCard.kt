@@ -198,7 +198,7 @@ fun MedicineFormCard(
                             text = medicine.name,
                             style = MaterialTheme.typography.bodySmall,
                             color = MediciTheme.colors.textSecondary,
-                            maxLines = 1,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.testTag("medicine_form_card_subtitle_$index")
                         )
@@ -251,7 +251,7 @@ fun MedicineFormCard(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 1. ওষুধের নাম (Required, maxLines = 2)
+                    // 1. ওষুধের নাম (Required, maxLines = 3 for full visibility of long names)
                     FormSectionHeader(
                         text = stringResource(R.string.section_header_medicine_name),
                         modifier = Modifier.testTag("medicine_form_${index}_header_name")
@@ -284,12 +284,13 @@ fun MedicineFormCard(
                             )
                         },
                         singleLine = false,
-                        maxLines = 2,
+                        maxLines = 3,
                         isError = isNameMissing,
                         shape = fieldShape,
                         colors = medicineOutlinedFieldColors(isError = isNameMissing),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 56.dp, max = 120.dp)
                             .testTag("medicine_form_${index}_name_input")
                     )
 

@@ -6,6 +6,7 @@ import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -290,6 +291,9 @@ class OcrParserAndDraftTest {
 
         composeTestRule.onNodeWithTag("sheet_scan_prescription_option").assertIsDisplayed()
         composeTestRule.onNodeWithTag("sheet_upload_gallery_option").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("sheet_upload_drive_helper")
+            .assertIsDisplayed()
+            .assertTextContains("Google Drive থেকে আপলোড করতে", substring = true)
     }
 
     @Test
@@ -325,6 +329,8 @@ class OcrParserAndDraftTest {
 
         val addedFileNames = mutableListOf<String>()
         val ocrTriggeredUris = mutableListOf<Uri>()
+        var launchedContract: ActivityResultContract<*, *>? = null
+        var launchedMimeTypes: List<String> = emptyList()
 
         val fakeRegistryOwner = object : ActivityResultRegistryOwner {
             override val activityResultRegistry = object : ActivityResultRegistry() {
@@ -334,6 +340,9 @@ class OcrParserAndDraftTest {
                     input: I,
                     options: ActivityOptionsCompat?
                 ) {
+                    launchedContract = contract
+                    @Suppress("UNCHECKED_CAST")
+                    launchedMimeTypes = (input as? Array<*>)?.mapNotNull { it as? String }.orEmpty()
                     @Suppress("UNCHECKED_CAST")
                     dispatchResult(requestCode, listOf(uri1, uri2) as O)
                 }
@@ -362,9 +371,15 @@ class OcrParserAndDraftTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithTag("sheet_upload_gallery_option")
+            .assertTextContains("ফাইল থেকে আপলোড করুন", substring = true)
             .performClick()
         composeTestRule.waitForIdle()
 
+        assertTrue(
+            "Expected ActivityResultContracts.OpenMultipleDocuments",
+            launchedContract is ActivityResultContracts.OpenMultipleDocuments
+        )
+        assertEquals(listOf("image/*"), launchedMimeTypes)
         assertEquals(2, addedFileNames.size)
         assertEquals(2, ocrTriggeredUris.size)
         addedFileNames.forEach { fileName ->

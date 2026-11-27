@@ -319,7 +319,7 @@ class AddPrescriptionListScreenTest {
 
         // Navigates to AddPrescriptionListScreen instead of old PrescriptionCarouselScreen
         composeTestRule.onNodeWithTag("add_prescription_list_screen").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("carousel_card_1").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("prescription_carousel_screen").assertDoesNotExist()
 
         // Tapping Close returns to PrescriptionListScreen
         composeTestRule.onNodeWithTag("add_prescription_close_button").performClick()
@@ -733,5 +733,80 @@ class AddPrescriptionListScreenTest {
         }.toSet()
         assertTrue(oldReminderIds.none { it in activeAlarmReminderIds })
         assertEquals(currentReminders.map { it.id }.toSet(), activeAlarmReminderIds)
+    }
+
+    @Test
+    fun testLongMedicineNameWrapsAcrossMultipleLinesWithoutTruncation() {
+        val longName = "Tab. Preclot AS 75 mg + 75 mg (Clopidogrel Aspirin)"
+        composeTestRule.setContent {
+            MediciTheme {
+                AddPrescriptionListScreen(
+                    viewModel = viewModel,
+                    onDismiss = {}
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("add_prescription_add_medicine_button").performClick()
+        composeTestRule.waitForIdle()
+
+        val initialHeight = composeTestRule.onNodeWithTag("medicine_form_0_name_input")
+            .fetchSemanticsNode().size.height
+
+        composeTestRule.onNodeWithTag("medicine_form_0_name_input")
+            .performScrollTo()
+            .performTextInput(longName)
+        composeTestRule.waitForIdle()
+
+        val expandedNode = composeTestRule.onNodeWithTag("medicine_form_0_name_input").fetchSemanticsNode()
+        val expandedHeight = expandedNode.size.height
+        val density = context.resources.displayMetrics.density
+        val expandedHeightDp = expandedHeight / density
+
+        assertEquals(longName, viewModel.draftPrescription.value.medicines[0].name)
+        composeTestRule.onNodeWithTag("medicine_form_0_name_input")
+            .assertIsDisplayed()
+            .assertTextContains(longName)
+        assertTrue(
+            "Expected multi-line name field height ($expandedHeight px) to exceed single-line height ($initialHeight px)",
+            expandedHeight > initialHeight
+        )
+        assertTrue(
+            "Expected name field height ($expandedHeightDp dp) to stay within 120.dp",
+            expandedHeightDp <= 120.5f
+        )
+
+        // Header subtitle also preserves full long medicine name without 1-line ellipsis cutoff
+        composeTestRule.onNodeWithTag("medicine_form_card_subtitle_0", useUnmergedTree = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertTextEquals(longName)
+    }
+
+    @Test
+    fun testScanAndUploadEntryIsVisibleInListScreen() {
+        composeTestRule.setContent {
+            MediciTheme {
+                AddPrescriptionListScreen(
+                    viewModel = viewModel,
+                    onDismiss = {}
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // Scan/upload dashed entry box inside Card1BaseInfo is visible
+        composeTestRule.onNodeWithTag("add_prescription_unified_box")
+            .performScrollTo()
+            .assertIsDisplayed()
+
+        // Tapping opens the sheet with both Camera Scan and Gallery Upload options
+        composeTestRule.onNodeWithTag("add_prescription_unified_box").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("add_prescription_options_sheet").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("sheet_scan_prescription_option").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("sheet_upload_gallery_option").assertIsDisplayed()
     }
 }

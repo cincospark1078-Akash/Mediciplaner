@@ -6,17 +6,17 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -31,20 +31,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,8 +48,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,15 +77,10 @@ import com.mediciplanner.app.core.util.UnitHelper
 import com.mediciplanner.app.data.local.entity.DoseSlot
 import com.mediciplanner.app.data.preferences.ThemePreferences
 import com.mediciplanner.app.ui.components.AccessibleTimeInputDialog
-import com.mediciplanner.app.ui.screens.home.formatBengaliDate
 import com.mediciplanner.app.ui.screens.home.toBengaliDigits
+import com.mediciplanner.app.ui.screens.prescription.components.Card1BaseInfo
 import com.mediciplanner.app.ui.screens.prescription.components.MedicineFormCard
-import com.mediciplanner.app.ui.screens.prescription.components.formatBengaliPrescriptionDate
-import com.mediciplanner.app.ui.screens.prescription.components.parsePrescriptionDateToLocalDate
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,6 +106,9 @@ fun AddPrescriptionListScreen(
     val saveError by viewModel.saveError.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
+    val extractedText by viewModel.extractedText.collectAsStateWithLifecycle()
+    val parsedMedicines by viewModel.parsedMedicines.collectAsStateWithLifecycle()
+    val isScanningOcr by viewModel.isScanningOcr.collectAsStateWithLifecycle()
     val showOcrReview by viewModel.showOcrReview.collectAsStateWithLifecycle()
     val reviewMedicines by viewModel.reviewMedicines.collectAsStateWithLifecycle()
     val ocrReviewErrorRes by viewModel.ocrReviewErrorRes.collectAsStateWithLifecycle()
@@ -129,7 +119,6 @@ fun AddPrescriptionListScreen(
 
     val isEditMode = editingPrescriptionId != null || prescriptionId != null || medicineId != null
 
-    var showDatePicker by remember { mutableStateOf(false) }
     var showDateError by remember { mutableStateOf(false) }
     var showFormErrors by remember { mutableStateOf(false) }
     var timePickerTarget by remember { mutableStateOf<Pair<Int, DoseSlot>?>(null) }
@@ -176,10 +165,16 @@ fun AddPrescriptionListScreen(
                 viewModel.addEmptyReviewMedicine()
             },
             onAddAll = {
+                val prevCount = viewModel.draftPrescription.value.medicines.size
                 viewModel.confirmAddAllReviewedMedicines {
-                    val lastIdx = viewModel.draftPrescription.value.medicines.lastIndex
-                    if (lastIdx >= 0) {
-                        expandedMap[lastIdx] = true
+                    val newSize = viewModel.draftPrescription.value.medicines.size
+                    for (i in prevCount until newSize) {
+                        expandedMap[i] = true
+                    }
+                    if (newSize > prevCount) {
+                        scope.launch {
+                            listState.animateScrollToItem(prevCount + 2)
+                        }
                     }
                 }
             },
@@ -190,80 +185,6 @@ fun AddPrescriptionListScreen(
             modifier = modifier
         )
         return
-    }
-
-    val initialSelectedMillis = remember(draftPrescription.date) {
-        val localDate = parsePrescriptionDateToLocalDate(draftPrescription.date) ?: LocalDate.now()
-        localDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-    }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = initialSelectedMillis
-        )
-        val datePickerColors = DatePickerDefaults.colors(
-            containerColor = MediciTheme.colors.card,
-            titleContentColor = MediciTheme.colors.textPrimary,
-            headlineContentColor = MediciTheme.colors.textPrimary,
-            weekdayContentColor = MediciTheme.colors.textSecondary,
-            subheadContentColor = MediciTheme.colors.textSecondary,
-            navigationContentColor = MediciTheme.colors.textPrimary,
-            yearContentColor = MediciTheme.colors.textPrimary,
-            currentYearContentColor = MediciTheme.colors.primary,
-            selectedYearContentColor = MediciTheme.colors.onPrimary,
-            selectedYearContainerColor = MediciTheme.colors.primary,
-            dayContentColor = MediciTheme.colors.textPrimary,
-            selectedDayContainerColor = MediciTheme.colors.primary,
-            selectedDayContentColor = MediciTheme.colors.onPrimary,
-            todayContentColor = MediciTheme.colors.primary,
-            todayDateBorderColor = MediciTheme.colors.primary
-        )
-
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            shape = RoundedCornerShape(20.dp),
-            colors = datePickerColors,
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val selectedLocalDate = Instant.ofEpochMilli(millis)
-                                .atZone(ZoneOffset.UTC)
-                                .toLocalDate()
-                            showDateError = false
-                            viewModel.updateDate(formatBengaliDate(selectedLocalDate))
-                        }
-                        showDatePicker = false
-                    },
-                    modifier = Modifier.testTag("prescription_date_picker_confirm")
-                ) {
-                    Text(
-                        text = stringResource(R.string.settings_ok_btn),
-                        color = MediciTheme.colors.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDatePicker = false },
-                    modifier = Modifier.testTag("prescription_date_picker_cancel")
-                ) {
-                    Text(
-                        text = stringResource(R.string.settings_cancel_btn),
-                        color = MediciTheme.colors.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        ) {
-            DatePicker(
-                state = datePickerState,
-                colors = datePickerColors
-            )
-        }
     }
 
     val activeTimeTarget = timePickerTarget
@@ -530,215 +451,95 @@ fun AddPrescriptionListScreen(
             }
         }
 
-        // Scrollable Content: Base Info Section + Expandable Medicine Cards
-        LazyColumn(
-            state = listState,
+        // Scrollable Content: Card1BaseInfo (Date/Doctor/Location + Photos & Scan OCR) + Expandable Medicine Cards
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .testTag("add_prescription_lazy_column"),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Prescription Base Info Section (Date Picker Required, Doctor Name Optional, Location Optional)
-            item(key = "prescription_base_info") {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("add_prescription_base_info_card"),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MediciTheme.colors.card
-                    ),
-                    border = BorderStroke(1.dp, MediciTheme.colors.outlineVariant),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
+            val hasOcrOrImages = extractedText.isNotBlank() ||
+                parsedMedicines.isNotEmpty() ||
+                draftPrescription.prescriptionImagePaths.isNotEmpty() ||
+                isScanningOcr
+            val baseCardHeight = if (hasOcrOrImages) {
+                minOf(620.dp, (maxHeight * 0.92f).coerceAtLeast(420.dp))
+            } else {
+                minOf(460.dp, (maxHeight * 0.85f).coerceAtLeast(360.dp))
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("add_prescription_lazy_column"),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Prescription Base Info Section (Card1BaseInfo: Date, Doctor, Location, Photos & Scan/OCR)
+                item(key = "prescription_base_info") {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .height(baseCardHeight)
+                            .testTag("add_prescription_base_info_card")
                     ) {
-                        Text(
-                            text = stringResource(R.string.add_prescription_base_info_header),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MediciTheme.colors.textPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        // Date Picker (Required)
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            val formattedDisplayDate = remember(draftPrescription.date) {
-                                formatBengaliPrescriptionDate(draftPrescription.date)
-                            }
-                            val isDateMissing = (showDateError || showFormErrors) && draftPrescription.date.isNullOrBlank()
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                OutlinedTextField(
-                                    value = formattedDisplayDate,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    enabled = false,
-                                    label = {
-                                        Text(
-                                            text = stringResource(R.string.field_date),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    placeholder = {
-                                        Text(
-                                            text = stringResource(R.string.field_date_placeholder),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.CalendarMonth,
-                                            contentDescription = stringResource(R.string.field_date),
-                                            tint = if (isDateMissing) {
-                                                MediciTheme.colors.warning
-                                            } else {
-                                                MediciTheme.colors.primary
-                                            }
-                                        )
-                                    },
-                                    isError = isDateMissing,
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        disabledTextColor = MediciTheme.colors.textPrimary,
-                                        disabledBorderColor = if (isDateMissing) {
-                                            MediciTheme.colors.warning
-                                        } else {
-                                            MediciTheme.colors.outline
-                                        },
-                                        disabledLabelColor = if (isDateMissing) {
-                                            MediciTheme.colors.warning
-                                        } else {
-                                            MediciTheme.colors.textSecondary
-                                        },
-                                        disabledLeadingIconColor = MediciTheme.colors.primary,
-                                        disabledPlaceholderColor = MediciTheme.colors.textSecondary
-                                    ),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .testTag("prescription_date_input")
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .clickable(
-                                            indication = null,
-                                            interactionSource = remember { MutableInteractionSource() }
-                                        ) {
-                                            showDatePicker = true
-                                        }
-                                        .testTag("prescription_date_click_overlay")
-                                )
-                            }
-
-                            if (isDateMissing) {
-                                Text(
-                                    text = stringResource(R.string.error_date_required),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MediciTheme.colors.warning,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .padding(start = 4.dp)
-                                        .testTag("error_date_required")
-                                )
-                            }
-                        }
-
-                        // Doctor Name (Optional)
-                        OutlinedTextField(
-                            value = draftPrescription.doctorName,
-                            onValueChange = { viewModel.updateDoctorName(it) },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.field_doctor_name),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                        Card1BaseInfo(
+                            draftPrescription = draftPrescription,
+                            onDateChanged = {
+                                showDateError = false
+                                viewModel.updateDate(it)
                             },
-                            placeholder = {
-                                Text(
-                                    text = stringResource(R.string.field_doctor_placeholder),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            onDoctorNameChanged = { viewModel.updateDoctorName(it) },
+                            onLocationChanged = { viewModel.updateLocation(it) },
+                            onImagesAdded = { paths ->
+                                viewModel.addPrescriptionImagePaths(paths)
+                                if (paths.isNotEmpty()) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.msg_image_added_removed),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
                             },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = stringResource(R.string.field_doctor_name),
-                                    tint = MediciTheme.colors.primary
-                                )
+                            onImageRemoved = { path ->
+                                viewModel.removePrescriptionImagePath(path)
+                                Handler(Looper.getMainLooper()).post {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.msg_image_added_removed),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             },
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MediciTheme.colors.primary,
-                                unfocusedBorderColor = MediciTheme.colors.outline,
-                                focusedTextColor = MediciTheme.colors.textPrimary,
-                                unfocusedTextColor = MediciTheme.colors.textPrimary,
-                                focusedLabelColor = MediciTheme.colors.primary,
-                                unfocusedLabelColor = MediciTheme.colors.textSecondary
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("doctor_name_input")
-                        )
-
-                        // Location (Optional)
-                        OutlinedTextField(
-                            value = draftPrescription.location,
-                            onValueChange = { viewModel.updateLocation(it) },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.field_location),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            onScanPrescriptionImage = { uri ->
+                                viewModel.processOcrImage(uri)
                             },
-                            placeholder = {
-                                Text(
-                                    text = stringResource(R.string.field_location_placeholder),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            onScanPrescriptionImages = { uris ->
+                                viewModel.processOcrImages(uris)
                             },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.LocalHospital,
-                                    contentDescription = stringResource(R.string.field_location),
-                                    tint = MediciTheme.colors.primary
-                                )
+                            extractedText = extractedText,
+                            parsedMedicines = parsedMedicines,
+                            isScanningOcr = isScanningOcr,
+                            onAddMedicineFromText = {
+                                viewModel.parseMedicinesFromExtractedText()
+                                viewModel.openOcrReview()
                             },
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MediciTheme.colors.primary,
-                                unfocusedBorderColor = MediciTheme.colors.outline,
-                                focusedTextColor = MediciTheme.colors.textPrimary,
-                                unfocusedTextColor = MediciTheme.colors.textPrimary,
-                                focusedLabelColor = MediciTheme.colors.primary,
-                                unfocusedLabelColor = MediciTheme.colors.textSecondary
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("location_input")
+                            onAddParsedMedicine = { parsed ->
+                                viewModel.addParsedMedicineToDraft(parsed)
+                                val addedIdx = viewModel.draftPrescription.value.medicines.lastIndex
+                                if (addedIdx >= 0) {
+                                    expandedMap[addedIdx] = true
+                                    scope.launch {
+                                        listState.animateScrollToItem(addedIdx + 2)
+                                    }
+                                }
+                            },
+                            showError = showDateError || showFormErrors
                         )
                     }
                 }
-            }
 
             // Section Header for Medicines List
             item(key = "medicines_section_header") {
@@ -881,6 +682,7 @@ fun AddPrescriptionListScreen(
                     )
                 }
             }
+        }
         }
 
         // Fixed Bottom Action Buttons: "নতুন ওষুধ যোগ করুন" and "সংরক্ষণ করুন"

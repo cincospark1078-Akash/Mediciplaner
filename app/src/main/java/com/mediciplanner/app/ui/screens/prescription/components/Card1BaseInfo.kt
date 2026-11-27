@@ -112,7 +112,7 @@ fun Card1BaseInfo(
     }
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
+        contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
             try {
@@ -278,7 +278,7 @@ fun Card1BaseInfo(
                 OutlinedButton(
                     onClick = {
                         showAddPrescriptionSheet = false
-                        launcher.launch("image/*")
+                        launcher.launch(arrayOf("image/*"))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -302,6 +302,18 @@ fun Card1BaseInfo(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Text(
+                    text = stringResource(R.string.ocr_upload_drive_helper),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MediciTheme.colors.textSecondary,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = MediciTheme.spacing.extraSmall)
+                        .testTag("sheet_upload_drive_helper")
+                )
             }
         }
     }
