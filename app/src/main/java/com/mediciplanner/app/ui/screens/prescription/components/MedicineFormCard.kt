@@ -1,5 +1,8 @@
 package com.mediciplanner.app.ui.screens.prescription.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -7,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,16 +19,19 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.EditNote
@@ -59,6 +66,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +81,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.mediciplanner.app.R
 import com.mediciplanner.app.core.theme.MediciTheme
 import com.mediciplanner.app.core.util.UnitHelper
@@ -78,7 +93,9 @@ import com.mediciplanner.app.ui.screens.home.toBengaliDigits
 import com.mediciplanner.app.ui.screens.prescription.DraftMedicine
 import com.mediciplanner.app.ui.screens.prescription.getDoseSlotResId
 import com.mediciplanner.app.ui.screens.prescription.getMedicineTypeResId
+import java.io.File
 import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -101,12 +118,35 @@ fun MedicineFormCard(
     onDurationChanged: (String) -> Unit = {},
     onStockChanged: (Int) -> Unit = {},
     onNoteChanged: (String) -> Unit = {},
+    onImagePathChanged: (String?) -> Unit = {},
     is24Hour: Boolean = false,
     showErrors: Boolean = false,
     onRequestTimePicker: ((DoseSlot) -> Unit)? = null,
     onRequestCustomInterval: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val imagesDir = File(context.filesDir, "medicine_images")
+                if (!imagesDir.exists()) {
+                    imagesDir.mkdirs()
+                }
+                val fileName = "${UUID.randomUUID()}.jpg"
+                val destFile = File(imagesDir, fileName)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    destFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                onImagePathChanged(fileName)
+            } catch (_: Exception) {}
+        }
+    }
+
     val cardTitle = stringResource(
         R.string.card2_medicine_default_name,
         toBengaliDigits((index + 1).toString())
@@ -810,6 +850,152 @@ fun MedicineFormCard(
                             .fillMaxWidth()
                             .testTag("medicine_form_${index}_note_input")
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 9. ওষুধের ছবি (ঐচ্ছিক)
+                    FormSectionHeader(
+                        text = stringResource(R.string.field_medicine_image),
+                        modifier = Modifier.testTag("medicine_form_${index}_header_image")
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val currentImagePath = medicine.imagePath
+                    if (currentImagePath.isNullOrBlank()) {
+                        val outlineColor = MediciTheme.colors.outline
+                        val stroke = Stroke(
+                            width = 3f,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 12f), 0f)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(110.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .drawBehind {
+                                    drawRoundRect(
+                                        color = outlineColor,
+                                        style = stroke,
+                                        cornerRadius = CornerRadius(20.dp.toPx())
+                                    )
+                                }
+                                .clickable { imageLauncher.launch("image/*") }
+                                .testTag("medicine_form_${index}_upload_image_button"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(
+                                            color = MediciTheme.colors.primaryContainer,
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                        contentDescription = stringResource(R.string.action_upload_image),
+                                        tint = MediciTheme.colors.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.action_upload_image),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MediciTheme.colors.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    } else {
+                        val imageFile = File(File(context.filesDir, "medicine_images"), currentImagePath)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .border(1.dp, MediciTheme.colors.outline, RoundedCornerShape(20.dp))
+                                    .background(MediciTheme.colors.surface)
+                                    .testTag("medicine_form_${index}_image_preview_box")
+                            ) {
+                                AsyncImage(
+                                    model = imageFile,
+                                    contentDescription = stringResource(R.string.medicine_image_preview),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .testTag("medicine_form_${index}_image_preview"),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { imageLauncher.launch("image/*") },
+                                    shape = RoundedCornerShape(20.dp),
+                                    border = BorderStroke(1.dp, MediciTheme.colors.primary),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MediciTheme.colors.primary
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .testTag("medicine_form_${index}_replace_image_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.action_replace_photo),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                OutlinedButton(
+                                    onClick = { onImagePathChanged(null) },
+                                    shape = RoundedCornerShape(20.dp),
+                                    border = BorderStroke(1.dp, MediciTheme.colors.warning),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MediciTheme.colors.warning
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .testTag("medicine_form_${index}_remove_image_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.action_remove_photo),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

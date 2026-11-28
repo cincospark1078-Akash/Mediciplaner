@@ -809,4 +809,116 @@ class AddPrescriptionListScreenTest {
         composeTestRule.onNodeWithTag("sheet_scan_prescription_option").assertIsDisplayed()
         composeTestRule.onNodeWithTag("sheet_upload_gallery_option").assertIsDisplayed()
     }
+
+    @Test
+    fun testPhotoSectionVisibleInExpandedCardAndExistingImagePathKeptAfterEditSave() = runTest {
+        Dispatchers.resetMain()
+        val futureDateIso = LocalDate.now().plusDays(2).format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val v1Id = UUID.randomUUID().toString()
+        val v1MedId = UUID.randomUUID().toString()
+        val v1SchedId = UUID.randomUUID().toString()
+        val existingImageFileName = "existing_med_photo.jpg"
+
+        val v1Pres = PrescriptionEntity(
+            id = v1Id,
+            parentId = v1Id,
+            versionNumber = 1,
+            isLatest = true,
+            date = futureDateIso,
+            doctorName = "ডা. রহমান",
+            location = "ঢাকা",
+            createdAt = "2026-11-20T08:00:00"
+        )
+        val v1Med = MedicineEntity(
+            id = v1MedId,
+            prescriptionId = v1Id,
+            name = "Napa",
+            type = MedicineType.TABLET,
+            strength = 500.0,
+            strengthUnit = "mg",
+            durationDays = 5,
+            intervalDays = 1,
+            foodRule = FoodRule.AFTER,
+            imagePath = existingImageFileName,
+            lineageId = v1MedId,
+            createdAt = "2026-11-20T08:00:00"
+        )
+        val v1Sched = DoseScheduleEntity(
+            id = v1SchedId,
+            medicineId = v1MedId,
+            slot = DoseSlot.MORNING,
+            time = "08:00",
+            doseAmount = 1.0,
+            doseUnit = "টি",
+            foodRule = FoodRule.AFTER
+        )
+        prescriptionRepository.saveFullPrescription(v1Pres, listOf(v1Med), listOf(v1Sched))
+
+        var dismissed = false
+        composeTestRule.setContent {
+            MediciTheme {
+                AddPrescriptionListScreen(
+                    viewModel = viewModel,
+                    prescriptionId = v1Id,
+                    onDismiss = { dismissed = true }
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // Expanded card with existing imagePath shows photo header, preview, replace, and remove actions
+        composeTestRule.onNodeWithTag("medicine_form_card_content_0").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("medicine_form_0_header_image")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertTextEquals("ওষুধের ছবি (ঐচ্ছিক)")
+        composeTestRule.onNodeWithTag("medicine_form_0_image_preview_box")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag("medicine_form_0_replace_image_button")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag("medicine_form_0_remove_image_button")
+            .performScrollTo()
+            .assertIsDisplayed()
+
+        // Newly added expanded card without photo shows photo header and upload action, then delete it
+        composeTestRule.onNodeWithTag("add_prescription_add_medicine_button").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("medicine_form_1_header_image")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertTextEquals("ওষুধের ছবি (ঐচ্ছিক)")
+        composeTestRule.onNodeWithTag("medicine_form_1_upload_image_button")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag("medicine_form_card_delete_1")
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Modify note on card 0 and save in edit mode -> existing imagePath must be kept in V2
+        composeTestRule.onNodeWithTag("medicine_form_0_note_input")
+            .performScrollTo()
+            .performTextInput("খাবার পরে")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("add_prescription_save_button").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            ShadowLooper.idleMainLooper()
+            dismissed || viewModel.saveError.value != null || viewModel.errorMessage.value != null
+        }
+
+        assertTrue(
+            "Save should succeed in edit mode. Error: ${viewModel.errorMessage.value ?: viewModel.saveError.value}",
+            dismissed
+        )
+
+        val versions = prescriptionDao.getPrescriptionVersions(v1Id).first()
+        assertEquals(2, versions.size)
+        val latestVersion = versions.first { it.isLatest }
+        val latestFull = prescriptionDao.getPrescriptionWithMedicinesById(latestVersion.id)!!
+        assertEquals(1, latestFull.medicines.size)
+        assertEquals(existingImageFileName, latestFull.medicines.first().medicine.imagePath)
+    }
 }

@@ -669,6 +669,7 @@ fun AddPrescriptionListScreen(
                         onDurationChanged = { viewModel.updateDurationDaysAt(index, it) },
                         onStockChanged = { viewModel.updateStockCountAt(index, it) },
                         onNoteChanged = { viewModel.updateMedicineNoteAt(index, it) },
+                        onImagePathChanged = { viewModel.updateMedicineImagePathAt(index, it) },
                         is24Hour = is24Hour,
                         showErrors = showFormErrors,
                         onRequestTimePicker = { slot ->

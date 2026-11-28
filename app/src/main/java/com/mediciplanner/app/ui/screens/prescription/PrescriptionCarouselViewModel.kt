@@ -1160,6 +1160,10 @@ class PrescriptionCarouselViewModel(
         updateMedicineAt(index) { it.copy(note = note) }
     }
 
+    fun updateMedicineImagePathAt(index: Int, imagePath: String?) {
+        updateMedicineAt(index) { it.copy(imagePath = imagePath) }
+    }
+
     /**
      * LOCKED LOGIC:
      * Do NOT reset the DraftPrescription state when 'Add More' is clicked.
